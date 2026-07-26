@@ -23,6 +23,8 @@ from .train import resolve_device, set_seed
 
 
 PROTOCOL = "g18_p2_seed42_frozen_g7_model_id_feasibility_v1"
+MULTISEED_PROTOCOL = "g18_p4_multiseed_frozen_g7_model_id_replication_v1"
+SUPPORTED_PROTOCOLS = {PROTOCOL, MULTISEED_PROTOCOL}
 HEAD_PREFIXES = ("embedding_norm.", "classifier.")
 HISTORY_FIELDS = [
     "epoch",
@@ -180,6 +182,10 @@ def _verify_inputs(
         "official_checkpoint": _resolve(root, config["model"]["checkpoint_path"]),
         "g7_checkpoint": _resolve(root, config["model"]["binary_checkpoint_path"]),
     }
+    if config.get("protocol") == MULTISEED_PROTOCOL:
+        paths["replication_authorization"] = _resolve(
+            root, config["inputs"]["replication_authorization"]["path"]
+        )
     expected = {
         "known_train": str(config["inputs"]["known_train"]["sha256"]),
         "known_tune": str(config["inputs"]["known_tune"]["sha256"]),
@@ -188,6 +194,10 @@ def _verify_inputs(
         "official_checkpoint": str(config["model"]["checkpoint_sha256"]),
         "g7_checkpoint": str(config["model"]["binary_checkpoint_sha256"]),
     }
+    if config.get("protocol") == MULTISEED_PROTOCOL:
+        expected["replication_authorization"] = str(
+            config["inputs"]["replication_authorization"]["sha256"]
+        )
     observed = {name: file_sha256(path) for name, path in paths.items()}
     mismatches = {
         name: (expected[name], observed[name])
@@ -207,6 +217,21 @@ def _verify_inputs(
         and preflight.get("ready_for_seed42_feasibility_training") is True
     ):
         raise ValueError("G18 P0/P1 prerequisites are not valid")
+    if config.get("protocol") == MULTISEED_PROTOCOL:
+        authorization = json.loads(
+            paths["replication_authorization"].read_text(encoding="utf-8")
+        )
+        if not (
+            authorization.get("passed") is True
+            and authorization.get("protocol")
+            == "g18_p3d_existing_unknown_linear_oe_v1"
+            and authorization.get("probe_gate_passed") is True
+            and authorization.get("decision") == "proceed_to_multiseed_replication"
+            and authorization.get("known_holdout_read") is False
+            and authorization.get("unknown_holdout_read") is False
+            and authorization.get("locked_datasets_read") == []
+        ):
+            raise ValueError("G18 P3d does not authorize multiseed replication")
     return paths, observed, registry
 
 
@@ -246,8 +271,9 @@ def train(config_path: Path, root: Path, *, resume: bool) -> dict[str, Any]:
     root = root.resolve(strict=True)
     config_path = config_path.resolve(strict=True)
     config = load_config(config_path)
-    if config.get("protocol") != PROTOCOL:
-        raise ValueError("Unexpected G18 P2 protocol")
+    protocol = str(config.get("protocol"))
+    if protocol not in SUPPORTED_PROTOCOLS:
+        raise ValueError("Unexpected G18 model-ID training protocol")
     paths, observed, registry = _verify_inputs(config, root)
     forbidden_inputs = ("unknown_tune", "known_holdout", "unknown_holdout")
     if any(name in config["inputs"] for name in forbidden_inputs):
@@ -310,6 +336,7 @@ def train(config_path: Path, root: Path, *, resume: bool) -> dict[str, Any]:
     history_path = output_dir / "history.csv"
     summary_path = output_dir / "summary.json"
     identity = {
+        "training_protocol": protocol,
         "config_sha256": file_sha256(config_path),
         **{f"{name}_sha256": value for name, value in observed.items()},
     }
@@ -413,7 +440,7 @@ def train(config_path: Path, root: Path, *, resume: bool) -> dict[str, Any]:
             bad_epochs = 0
             _atomic_torch_save(
                 {
-                    "protocol": PROTOCOL,
+                    "protocol": protocol,
                     "seed": seed,
                     "epoch": epoch,
                     "head_state": _head_state(model),
@@ -444,7 +471,7 @@ def train(config_path: Path, root: Path, *, resume: bool) -> dict[str, Any]:
         _write_history(history_path, history)
         _atomic_torch_save(
             {
-                "protocol": PROTOCOL,
+                "protocol": protocol,
                 "seed": seed,
                 "epoch": epoch,
                 "head_state": _head_state(model),
@@ -477,11 +504,15 @@ def train(config_path: Path, root: Path, *, resume: bool) -> dict[str, Any]:
     )
     report = {
         "passed": True,
-        "protocol": PROTOCOL,
+        "protocol": protocol,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "seed": seed,
         "decision": (
-            "proceed_to_unknown_calibration"
+            (
+                "proceed_to_fixed_outlier_exposure_replication"
+                if protocol == MULTISEED_PROTOCOL
+                else "proceed_to_unknown_calibration"
+            )
             if feasibility
             else "stop_model_identification_branch"
         ),

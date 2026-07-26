@@ -1,0 +1,80 @@
+protocol: g18_p5_multiseed_fixed_linear_oe_v1
+
+inputs:
+  known_train:
+    path: artifacts/g18_model_identification/p0_registry/known_train.csv
+    sha256: 0f8e756f26da9e39e7aa2092d06b75d7d9fc3e19d8d2cff790cc3f432bd0c73e
+  known_tune:
+    path: artifacts/g18_model_identification/p0_registry/known_tune.csv
+    sha256: f3467b1654d23a533f58fa2f5cb93da2f3a9388473e657f90d71a7cb3c9b5d4b
+  unknown_oe_train:
+    path: artifacts/g18_model_identification/p3d_preflight/unknown_oe_train.csv
+    sha256: ef8f1f31ffdc3252bed35c0ed32257306c4090b815152e04c0a316753587bd69
+  unknown_calibration:
+    path: artifacts/g18_model_identification/p3d_preflight/unknown_calibration.csv
+    sha256: 4faaf347d3b6b5eae7c0c48ffb7330294cabede94f003021df042f74f55991c0
+  registry_audit:
+    path: artifacts/g18_model_identification/p0_registry/audit.json
+    sha256: dfa788540dbeef4b39fd6c6562d902921af8976bb576e8565e7f25e8629229b9
+  p3d_config:
+    path: configs/g18_outlier_exposure.yaml
+    sha256: 23a4fd32da4b570db4054052be14e81566be047b36aa89995ea898435f2434a5
+  p3d_preflight:
+    path: artifacts/g18_model_identification/p3d_preflight/report.json
+    sha256: e1177a722dc619538802710457e864a9a6a78a4a8dd037069abfe78e83f72f44
+  p3d_summary:
+    path: artifacts/g18_model_identification/p3d_outlier_exposure/summary.json
+    sha256: 184d251bf7362eb147b324029b3f2d3b4e0300325128b298b78b2ec7e39c1965
+  p4_preflight:
+    path: artifacts/g18_model_identification/p4_preflight/report.json
+    sha256: aa4b8747f7d2a264120a4f8f418d2755891bc03079791264c0bb555730d441d6
+
+replications:
+  "43":
+    checkpoint:
+      path: artifacts/g18_model_identification/p4_multiseed/seed_43/best.pt
+      sha256: 1b4027ffbaab31ee79f7ad8beea9cd758195f9c750d7e22583b863a3b68e5ac3
+    summary:
+      path: artifacts/g18_model_identification/p4_multiseed/seed_43/summary.json
+      sha256: 0057f25ec889e8c2811ccae18096a7ebbd3e355a0f1c0ccc2a74fb9c892e6efa
+  "44":
+    checkpoint:
+      path: artifacts/g18_model_identification/p4_multiseed/seed_44/best.pt
+      sha256: 14aa77173a9f06d7f7b3b626716f557089c8290918aa6374034b6fb612c264b1
+    summary:
+      path: artifacts/g18_model_identification/p4_multiseed/seed_44/summary.json
+      sha256: 6c7aab9923c1d0d48462193396c958cf091afb5a8e5643ffec36ea0b9f5d660a
+
+data:
+  sample_rate: 16000
+  clip_seconds: 1.0
+
+model:
+  initialization: audioset
+  vendor_dir: artifacts/g7_panns/vendor/audioset_tagging_cnn/pytorch
+  checkpoint_path: artifacts/g7_panns/checkpoints/Cnn14_16k_mAP=0.438.pth
+  checkpoint_sha256: e2ee543a27919542c2ea03eabaa70b24dcd4e6c8e05621de6b67a94e4c5058e6
+  binary_checkpoint_path: artifacts_g7_panns_pt/runs/seed_42/best.pt
+  binary_checkpoint_sha256: d357f194105ec27a61838e0f4c2e7575932e2dd861e529ef970b1fb467954cdc
+
+model_id_head:
+  embedding_dim: 2048
+
+outlier_exposure:
+  fit_seed: 42
+  split_seed: 42
+  device: auto
+  batch_size: 128
+  unknown_train_fraction: 0.60
+  pca_components: 32
+  logistic_regularization_c: 0.10
+  minimum_known_acceptance: 0.90
+
+gates:
+  minimum_tune_balanced_accuracy: 0.70
+  minimum_tune_unknown_recall: 0.50
+  minimum_tune_known_end_to_end_accuracy: 0.80
+  minimum_tune_known_unknown_auroc: 0.70
+
+preflight_output_dir: artifacts/g18_model_identification/p5_preflight
+output_dir: artifacts/g18_model_identification/p5_multiseed_outlier_exposure

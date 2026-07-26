@@ -1,0 +1,59 @@
+protocol: g18_p3c_pca32_class_conditional_knn5_probe_v1
+
+inputs:
+  known_train:
+    path: artifacts/g18_model_identification/p0_registry/known_train.csv
+    sha256: 0f8e756f26da9e39e7aa2092d06b75d7d9fc3e19d8d2cff790cc3f432bd0c73e
+  known_tune:
+    path: artifacts/g18_model_identification/p0_registry/known_tune.csv
+    sha256: f3467b1654d23a533f58fa2f5cb93da2f3a9388473e657f90d71a7cb3c9b5d4b
+  unknown_tune:
+    path: artifacts/g18_model_identification/p0_registry/unknown_tune.csv
+    sha256: 7088bef8de96c1ea861389c5d2a268fe357a6e7755fc9cb6747d0f2b2fbef8fd
+  registry_audit:
+    path: artifacts/g18_model_identification/p0_registry/audit.json
+    sha256: dfa788540dbeef4b39fd6c6562d902921af8976bb576e8565e7f25e8629229b9
+  p1_preflight:
+    path: artifacts/g18_model_identification/p1_preflight/report.json
+    sha256: 3ee645d4ca65da4b0a49300b371a5450877896163ce3536f426477d2b05a0f7c
+  p2_checkpoint:
+    path: artifacts/g18_model_identification/p2_seed42/seed_42/best.pt
+    sha256: 6e207318785ca1f970f888d74b10a0823a96088fe1b4dc87f6b71f39f7a67c20
+  p2_summary:
+    path: artifacts/g18_model_identification/p2_seed42/seed_42/summary.json
+    sha256: 508891daab3d59cd72851ee18c025989ae43e03847e05fd1d9b5c38499f77c00
+  p3b_summary:
+    path: artifacts/g18_model_identification/p3b_prototype_probe/summary.json
+    sha256: fb2a2982ac8782fd6df97c3cfd34ce240d8c420859081eb7b0840aae3fdae8a0
+
+data:
+  sample_rate: 16000
+  clip_seconds: 1.0
+
+model:
+  initialization: audioset
+  vendor_dir: artifacts/g7_panns/vendor/audioset_tagging_cnn/pytorch
+  checkpoint_path: artifacts/g7_panns/checkpoints/Cnn14_16k_mAP=0.438.pth
+  checkpoint_sha256: e2ee543a27919542c2ea03eabaa70b24dcd4e6c8e05621de6b67a94e4c5058e6
+  binary_checkpoint_path: artifacts_g7_panns_pt/runs/seed_42/best.pt
+  binary_checkpoint_sha256: d357f194105ec27a61838e0f4c2e7575932e2dd861e529ef970b1fb467954cdc
+
+model_id_head:
+  embedding_dim: 2048
+
+knn:
+  seed: 42
+  device: auto
+  batch_size: 128
+  pca_components: 32
+  neighbors: 5
+  minimum_known_acceptance: 0.90
+
+gates:
+  minimum_tune_balanced_accuracy: 0.70
+  minimum_tune_unknown_recall: 0.50
+  minimum_tune_known_end_to_end_accuracy: 0.80
+  minimum_tune_known_unknown_auroc: 0.70
+
+preflight_output_dir: artifacts/g18_model_identification/p3c_preflight
+output_dir: artifacts/g18_model_identification/p3c_knn_probe

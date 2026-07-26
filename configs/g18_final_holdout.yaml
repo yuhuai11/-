@@ -1,0 +1,103 @@
+protocol: g18_p6_single_final_holdout_v1
+
+inputs:
+  registry_audit:
+    path: artifacts/g18_model_identification/p0_registry/audit.json
+    sha256: dfa788540dbeef4b39fd6c6562d902921af8976bb576e8565e7f25e8629229b9
+  known_holdout:
+    path: artifacts/g18_model_identification/p0_registry/known_holdout.csv
+    sha256: c19ec0619932abda9a629cbd8ed7fa48fec57eb7e06bec0211ccf120caa991cf
+    rows: 1820
+    recordings: 91
+  unknown_holdout:
+    path: artifacts/g18_model_identification/p0_registry/unknown_holdout.csv
+    sha256: aadb0448f40615d548df64bbac6d071c5ddff7d9b5e49c52c5d4533a63973dfe
+    rows: 1780
+    recordings: 89
+  p5_summary:
+    path: artifacts/g18_model_identification/p5_multiseed_outlier_exposure/summary.json
+    sha256: fc9c80c7f67f5ec97b5117562460d27f0a688f2f71240fca139e1ed46bb8ff04
+  g7_frozen_protocol:
+    path: artifacts/g11_final_dual_mode/frozen_protocol.json
+    sha256: 01aa9bdce0d13b081ae8c0e2a289e65b5f75785e5158f4b5653405404fb056e9
+
+systems:
+  "42":
+    model_id_checkpoint:
+      path: artifacts/g18_model_identification/p2_seed42/seed_42/best.pt
+      sha256: 6e207318785ca1f970f888d74b10a0823a96088fe1b4dc87f6b71f39f7a67c20
+    model_id_summary:
+      path: artifacts/g18_model_identification/p2_seed42/seed_42/summary.json
+      sha256: 508891daab3d59cd72851ee18c025989ae43e03847e05fd1d9b5c38499f77c00
+    oe_space:
+      path: artifacts/g18_model_identification/p3d_outlier_exposure/linear_oe_space.npz
+      sha256: 2b73505b35a6c49d36f4a50e704f154c46590df45047e93d885837e90bf14d59
+    oe_summary:
+      path: artifacts/g18_model_identification/p3d_outlier_exposure/summary.json
+      sha256: 184d251bf7362eb147b324029b3f2d3b4e0300325128b298b78b2ec7e39c1965
+  "43":
+    model_id_checkpoint:
+      path: artifacts/g18_model_identification/p4_multiseed/seed_43/best.pt
+      sha256: 1b4027ffbaab31ee79f7ad8beea9cd758195f9c750d7e22583b863a3b68e5ac3
+    model_id_summary:
+      path: artifacts/g18_model_identification/p4_multiseed/seed_43/summary.json
+      sha256: 0057f25ec889e8c2811ccae18096a7ebbd3e355a0f1c0ccc2a74fb9c892e6efa
+    oe_space:
+      path: artifacts/g18_model_identification/p5_multiseed_outlier_exposure/seed_43/linear_oe_space.npz
+      sha256: db95f71dba4d08e910f312ae7e3376c422c3779840ce2282c5463bafbf9b281f
+    oe_summary:
+      path: artifacts/g18_model_identification/p5_multiseed_outlier_exposure/seed_43/summary.json
+      sha256: cb3642939c54992932ac6497b2c37031f026f96047cc775875f779b0774f2fa2
+  "44":
+    model_id_checkpoint:
+      path: artifacts/g18_model_identification/p4_multiseed/seed_44/best.pt
+      sha256: 14aa77173a9f06d7f7b3b626716f557089c8290918aa6374034b6fb612c264b1
+    model_id_summary:
+      path: artifacts/g18_model_identification/p4_multiseed/seed_44/summary.json
+      sha256: 6c7aab9923c1d0d48462193396c958cf091afb5a8e5643ffec36ea0b9f5d660a
+    oe_space:
+      path: artifacts/g18_model_identification/p5_multiseed_outlier_exposure/seed_44/linear_oe_space.npz
+      sha256: 91cdc683fc65827745da44b3e413d8646a8345a4618a76a063db6b1a78b584d8
+    oe_summary:
+      path: artifacts/g18_model_identification/p5_multiseed_outlier_exposure/seed_44/summary.json
+      sha256: 614b81c2d5476d1101fb9997a2f8ab1315c499bd546726ab474aece4ac6e5412
+
+model:
+  initialization: audioset
+  vendor_dir: artifacts/g7_panns/vendor/audioset_tagging_cnn/pytorch
+  checkpoint_path: artifacts/g7_panns/checkpoints/Cnn14_16k_mAP=0.438.pth
+  checkpoint_sha256: e2ee543a27919542c2ea03eabaa70b24dcd4e6c8e05621de6b67a94e4c5058e6
+  binary_checkpoint_path: artifacts_g7_panns_pt/runs/seed_42/best.pt
+  binary_checkpoint_sha256: d357f194105ec27a61838e0f4c2e7575932e2dd861e529ef970b1fb467954cdc
+  embedding_dim: 2048
+
+data:
+  sample_rate: 16000
+  clip_seconds: 1.0
+  batch_size: 128
+
+g7_diagnostics:
+  temperature: 2.258312527893372
+  recording_aggregation: mean_segment_logit_then_temperature_sigmoid
+  strict_threshold: 0.7236399840238329
+  balanced_threshold: 0.5085329108689571
+  primary_model_id_metrics_are_conditional_on_uav_input: true
+
+reporting:
+  seeds: [42, 43, 44]
+  seed_selection: forbidden
+  aggregate: [mean, sample_std, minimum, maximum]
+  unknown_models: [X6D, Y6]
+  known_models:
+    - MAVIC2PRO
+    - MAVIC2ZOOM
+    - MAVIC3
+    - MAVICAIR2
+    - MAVICAIR2S
+    - MAVICMINI2
+    - PHANTOM4
+    - YUNEECH520
+    - YUNEECH520ERTK
+
+preflight_output_dir: artifacts/g18_model_identification/p6_preflight
+output_dir: artifacts/g18_model_identification/p6_final_holdout_once
