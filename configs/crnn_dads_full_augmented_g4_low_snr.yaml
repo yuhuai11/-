@@ -1,0 +1,62 @@
+data:
+  parquet_dir: date/DADS/data
+  manifest_dir: artifacts_full/manifests
+  audio_cache_dir: artifacts_full/audio_cache
+  sample_rate: 16000
+  clip_seconds: 1.0
+  per_class: all
+  manifest_seed: 42
+  splits:
+    train: 0.70
+    val: 0.15
+    test: 0.15
+
+features:
+  type: log_mel
+  n_mels: 64
+  n_fft: 512
+  win_length: 400
+  hop_length: 160
+  f_min: 20
+  f_max: 8000
+
+model:
+  type: crnn
+  conv_channels: [32, 64, 128]
+  gru_hidden: 128
+  gru_layers: 1
+  bidirectional: true
+  dropout: 0.30
+
+train:
+  # Champion-challenger screening: seed 42 only. G2 remains the champion.
+  seeds: [42]
+  batch_size: 32
+  epochs: 150
+  learning_rate: 0.001
+  patience: 10
+  num_workers: 0
+  device: auto
+  pos_weight: auto
+  augmentation:
+    positive_mix_probability: 0.70
+    # G4 is identical to G2 except that 5% probability is moved from +10 dB
+    # to -10 dB. This changes about 2.05% of all train draws.
+    mix_snr_db: [-10, -5, 0, 5, 10]
+    mix_snr_weights: [0.05, 0.10, 0.25, 0.35, 0.25]
+    frequency_response_probability: 0.50
+    frequency_response_anchors: 8
+    frequency_response_std_db: 3.0
+    frequency_response_limit_db: 6.0
+    reverb_probability: 0.30
+    reverb_delay_ms: [12.0, 80.0]
+    reverb_gain: [0.05, 0.25]
+    colored_noise_probability: 0.30
+    colored_noise_snr_db: [10.0, 30.0]
+    time_shift_probability: 0.50
+    max_time_shift_ms: 100.0
+
+eval:
+  thresholds: [0.40, 0.50, 0.65]
+
+output_dir: archive/historical_models/failed_candidates/artifacts_crnn_full_augmented_g4_low_snr/runs

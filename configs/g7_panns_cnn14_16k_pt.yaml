@@ -1,0 +1,53 @@
+data:
+  parquet_dir: date/DADS/data
+  manifest_dir: artifacts_full/manifests
+  audio_cache_dir: artifacts_full/audio_cache
+  sample_rate: 16000
+  clip_seconds: 1.0
+  per_class: all
+  manifest_seed: 42
+  splits: {train: 0.70, val: 0.15, test: 0.15}
+
+features:
+  type: waveform
+
+model:
+  type: panns_cnn14_16k
+  initialization: audioset
+  vendor_dir: artifacts/g7_panns/vendor/audioset_tagging_cnn/pytorch
+  checkpoint_path: artifacts/g7_panns/checkpoints/Cnn14_16k_mAP=0.438.pth
+  checkpoint_sha256: e2ee543a27919542c2ea03eabaa70b24dcd4e6c8e05621de6b67a94e4c5058e6
+  spec_augment: false
+  frontend_precision: float32
+
+train:
+  seeds: [42]
+  batch_size: 128
+  epochs: 15
+  learning_rate: 0.0001
+  lr_decay: 0.75
+  patience: 4
+  num_workers: 0
+  device: auto
+  mixed_precision: true
+  pos_weight: auto
+  augmentation:
+    positive_mix_probability: 0.70
+    mix_snr_db: [-5, 0, 5, 10]
+    mix_snr_weights: [0.10, 0.25, 0.35, 0.30]
+    frequency_response_probability: 0.50
+    frequency_response_anchors: 8
+    frequency_response_std_db: 3.0
+    frequency_response_limit_db: 6.0
+    reverb_probability: 0.30
+    reverb_delay_ms: [12.0, 80.0]
+    reverb_gain: [0.05, 0.25]
+    colored_noise_probability: 0.30
+    colored_noise_snr_db: [10.0, 30.0]
+    time_shift_probability: 0.50
+    max_time_shift_ms: 100.0
+
+eval:
+  thresholds: [0.40, 0.50, 0.65]
+
+output_dir: artifacts_g7_panns_pt/runs

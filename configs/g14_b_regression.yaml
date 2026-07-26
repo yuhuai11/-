@@ -1,0 +1,56 @@
+protocol: g14_b_cross_domain_regression_v1
+
+baseline:
+  checkpoint: artifacts_g7_panns_pt/runs/seed_42/best.pt
+  checkpoint_sha256: d357f194105ec27a61838e0f4c2e7575932e2dd861e529ef970b1fb467954cdc
+  dads_test_probabilities: artifacts_g7_panns_pt/runs/seed_42/test_probabilities.npy
+  dads_test_labels: artifacts_g7_panns_pt/runs/seed_42/test_labels.npy
+  val_ood_tune_predictions: artifacts/val_ood/predictions/tune/g7_panns_pt/seed_42/predictions.csv
+  val_ood_holdout_predictions: artifacts/val_ood/predictions/holdout/g7_panns_pt/seed_42/predictions.csv
+  g9_guard_predictions: artifacts/g9_hard_negatives/evaluation/seed_42/predictions.csv
+
+candidates:
+  - seed: 42
+    checkpoint: artifacts/g14_domain_generalization/runs/head_only/seed_42/best.pt
+    checkpoint_sha256: 6c7aff14ef01a545a02c79e75cf246122b63ee0dc3ff7061cfb26794ff3abad0
+  - seed: 43
+    checkpoint: artifacts/g14_domain_generalization/runs/head_only/seed_43/best.pt
+    checkpoint_sha256: c11a49361497e685f14c07b7717070224195d7dd2f795e8dce3a979d98a21c39
+  - seed: 44
+    checkpoint: artifacts/g14_domain_generalization/runs/head_only/seed_44/best.pt
+    checkpoint_sha256: 73faba8ac833c368315a41b29c366226651fa765a71cee77ed03cc6cd6395545
+
+datasets:
+  dads_test:
+    manifest: artifacts_full/manifests/dads_all_seed42.csv
+    manifest_sha256: be1a6293b90a15208c75d4f2aa8cfe4efefc68c8cc382ca57f9c637e08f09c45
+    split: test
+  val_ood:
+    tune_manifest: artifacts/val_ood/manifests/val_ood_tune_manifest.csv
+    tune_manifest_sha256: 9fe5a462b557595d6ca2f2136b2c1939ac6f696231a01468d073b94f4d25f9e3
+    holdout_manifest: artifacts/val_ood/manifests/val_ood_holdout_manifest.csv
+    holdout_manifest_sha256: 65efcbaa034b11e8424598b2b45b3bd7d78a51ea5be8a04a3b156c08cbfecc89
+  g9_guard:
+    manifest: artifacts/g9_hard_negatives/manifests/hn_guard.csv
+    manifest_sha256: 7e834817ffca2b033d9024a53ebef87e8b29efd79ddf24a70c8c0c406e44bb6c
+    audit: artifacts/g9_hard_negatives/audit.json
+    audit_sha256: a56e353b320fe48e143c54eaf60919db5f893b0a0e35d7d20d1b865e7e29807d
+
+evaluation:
+  threshold: 0.5
+  batch_size: 128
+  num_workers: 0
+  device: auto
+
+gates:
+  dads_test:
+    maximum_f1_drop: 0.005
+    maximum_auc_drop: 0.002
+  val_ood_holdout:
+    maximum_f1_drop: 0.02
+    maximum_auc_drop: 0.01
+  g9_guard:
+    maximum_segment_fpr_increase: 0.01
+  require_every_seed: true
+
+output_dir: artifacts/g14_domain_generalization/regression

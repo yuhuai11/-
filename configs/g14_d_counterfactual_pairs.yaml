@@ -1,0 +1,26 @@
+protocol: g14_d_paired_counterfactual_manifest_v1
+source_manifest: artifacts/g14_domain_generalization/segment_cache/g14_segment_manifest.csv
+source_audit: artifacts/g14_domain_generalization/segment_cache/segment_cache_audit.json
+
+splits:
+  tune:
+    background_samples: 1200
+    seed: 20260724
+  dev_holdout:
+    background_samples: 1200
+    seed: 20260725
+
+mixing:
+  target_snr_db: [-15.0, -10.0, -5.0, 0.0]
+  require_same_background_within_pair: true
+  positive_rms_matched_to_negative: true
+  common_pair_peak_limit: 0.99
+  epsilon: 1.0e-8
+
+selection:
+  background_strata: [source_group, device, scene_label]
+  uav_strata: [source_group]
+  without_replacement_within_split: true
+  require_split_disjoint_audio_sha256: true
+
+output_dir: artifacts/g14_domain_generalization/counterfactual_pairs

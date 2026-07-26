@@ -1,0 +1,32 @@
+protocol: g18_p1_frozen_g7_model_id_preflight_v1
+
+inputs:
+  known_train:
+    path: artifacts/g18_model_identification/p0_registry/known_train.csv
+    sha256: 0f8e756f26da9e39e7aa2092d06b75d7d9fc3e19d8d2cff790cc3f432bd0c73e
+  registry_audit:
+    path: artifacts/g18_model_identification/p0_registry/audit.json
+    sha256: dfa788540dbeef4b39fd6c6562d902921af8976bb576e8565e7f25e8629229b9
+
+data:
+  sample_rate: 16000
+  clip_seconds: 1.0
+
+model:
+  initialization: audioset
+  vendor_dir: artifacts/g7_panns/vendor/audioset_tagging_cnn/pytorch
+  checkpoint_path: artifacts/g7_panns/checkpoints/Cnn14_16k_mAP=0.438.pth
+  checkpoint_sha256: e2ee543a27919542c2ea03eabaa70b24dcd4e6c8e05621de6b67a94e4c5058e6
+  binary_checkpoint_path: artifacts_g7_panns_pt/runs/seed_42/best.pt
+  binary_checkpoint_sha256: d357f194105ec27a61838e0f4c2e7575932e2dd861e529ef970b1fb467954cdc
+
+model_id_head:
+  embedding_dim: 2048
+  architecture: layer_norm_linear
+
+preflight:
+  seed: 42
+  samples_per_model: 2
+  device: auto
+
+output_dir: artifacts/g18_model_identification/p1_preflight

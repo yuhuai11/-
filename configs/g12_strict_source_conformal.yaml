@@ -1,0 +1,35 @@
+algorithm: g12_strict_source_conformal_v1
+
+seeds: [42, 43, 44]
+
+inputs:
+  tune_manifest: artifacts/val_ood/manifests/val_ood_tune_manifest.csv
+  holdout_manifest: artifacts/val_ood/manifests/val_ood_holdout_manifest.csv
+  tune_predictions:
+    - artifacts/val_ood/predictions/tune/g9_panns_hn/seed_42/predictions.csv
+    - artifacts/val_ood/predictions/tune/g9_panns_hn/seed_43/predictions.csv
+    - artifacts/val_ood/predictions/tune/g9_panns_hn/seed_44/predictions.csv
+  holdout_predictions:
+    - artifacts/val_ood/predictions/holdout/g9_panns_hn/seed_42/predictions.csv
+    - artifacts/val_ood/predictions/holdout/g9_panns_hn/seed_43/predictions.csv
+    - artifacts/val_ood/predictions/holdout/g9_panns_hn/seed_44/predictions.csv
+  g10_calibration: artifacts/g10_ensemble_source_robust/frozen_calibration.json
+  baseline_metrics: artifacts/g7_low_fpr_candidate/g7_panns_pt_seed42/metrics.json
+
+calibration:
+  target_fpr: 0.01
+  source_coverage: 0.95
+  minimum_tune_tpr_retention: 0.80
+  group_column: background_source
+  threshold_selection: maximum_estimable_source_order_statistic
+  balanced_mode_policy: retain_g7
+
+evaluation:
+  bootstrap_samples: 2000
+  bootstrap_seed: 20260722
+
+outputs:
+  frozen_calibration: artifacts/g12_strict_source_conformal/frozen_calibration.json
+  evaluation_dir: artifacts/g12_strict_source_conformal/evaluation
+
+protocol_document: docs/G12严格模式跨来源保守校准方案.md

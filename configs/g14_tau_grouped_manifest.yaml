@@ -1,0 +1,51 @@
+protocol: g14_tau_grouped_manifest_v1
+dataset: tau_urban_2022
+intake_registry: artifacts/g14_domain_generalization/intake/tau_intake_registry.csv
+intake_audit: artifacts/g14_domain_generalization/intake/tau_intake_audit.json
+g13_consumed_hashes: artifacts/g14_domain_generalization/p0_firewall/g13_audio_sha256.txt
+dads_raw_registry: artifacts/dads_dedup_v2/source_registry.csv
+kielce_manifest: artifacts/g14_domain_generalization/kielce_manifest/kielce_primary_uav_manifest.csv
+output_dir: artifacts/g14_domain_generalization/tau_manifest
+license: Other-Non-Commercial
+archives:
+  - part: 1
+    path: data/g14_domain_generalization/_raw/tau_urban_2022/TAU-urban-acoustic-scenes-2022-mobile-development.audio.1.zip
+    expected_wavs: 15112
+  - part: 9
+    path: data/g14_domain_generalization/_raw/tau_urban_2022/TAU-urban-acoustic-scenes-2022-mobile-development.audio.9.zip
+    expected_wavs: 15112
+  - part: 16
+    path: data/g14_domain_generalization/_raw/tau_urban_2022/TAU-urban-acoustic-scenes-2022-mobile-development.audio.16.zip
+    expected_wavs: 3670
+city_splits:
+  barcelona: train
+  london: train
+  lyon: train
+  milan: train
+  paris: train
+  vienna: train
+  lisbon: tune
+  prague: tune
+  helsinki: dev_holdout
+  stockholm: dev_holdout
+expected:
+  samples: 33894
+  source_groups: 63
+  unique_devices: 9
+  train_source_groups_minimum: 10
+  tune_source_groups_minimum: 10
+  dev_holdout_source_groups_minimum: 10
+  train_scenes: [airport, public_square, tram]
+  tune_scenes: [airport, public_square]
+  dev_holdout_scenes: [airport, public_square, tram]
+policy:
+  split_unit: city
+  city_must_not_cross_splits: true
+  source_group_must_not_cross_splits: true
+  exact_duplicate_wavs_forbidden: true
+  g13_audio_hash_overlap_must_be_zero: true
+  dads_raw_audio_hash_overlap_must_be_zero: true
+  kielce_audio_hash_overlap_must_be_zero: true
+  extract_audio_to_disk: false
+  model_inference: false
+  training: false

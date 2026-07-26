@@ -1,0 +1,206 @@
+protocol: g14_multisource_intake_v1
+root: data/g14_domain_generalization
+output_dir: artifacts/g14_domain_generalization/intake
+minimum:
+  source_groups_per_label: 10
+  samples_per_source_group: 50
+  require_multiple_acquisition_systems: true
+  require_explicit_license_before_training: true
+  require_sha256: true
+  require_zero_consumed_overlap: true
+sources:
+  nasa_suas:
+    role: uav_primary_and_aircraft_hard_negative
+    intake_class: positive_uav
+    selected: false
+    status: excluded_by_user_license_ambiguity
+    dataset_name: NASA Small UAS Flyover Acoustics Data
+    publisher: National Aeronautics and Space Administration
+    catalog_url: https://catalog.data.gov/dataset/small-uas-flyover-acoustics-data
+    archive_url: https://data.nasa.gov/docs/datasets/rfk401li/small_uav_acoustics.zip
+    description_url: https://data.nasa.gov/docs/datasets/rfk401li/Data_Description_20160203.pdf
+    archive_path: data/g14_domain_generalization/_raw/nasa_suas/small_uav_acoustics.zip
+    expected_bytes: 1693926297
+    expected_sha256: 9682a6f65818c10ca37b54640bd747efe00c008615aecbd8088ce15c7700572a
+    format: MATLAB
+    positive_vehicle_tokens: [hex, phantom, y6]
+    negative_vehicle_tokens: [edge, cub]
+    source_group_unit: vehicle_flight
+    acquisition_groups: [virginia_beach_2014, ap_hill_2015]
+    license:
+      access_level: public
+      expression: not_explicit_on_catalog_page
+      commercial_use: unresolved
+      training_allowed: false
+      evidence_path: configs/g14_nasa_license_evidence.yaml
+      audit_path: artifacts/g14_domain_generalization/intake/nasa_license_audit.json
+      contact_name: Nikolas Zawodny
+      contact_email: nikolas.s.zawodny@nasa.gov
+      action: archive_official_terms_or_obtain_confirmation_before_model_training
+    reason: official_catalog_does_not_state_a_reuse_license_and_user_selected_an_open_replacement
+  kielce_17_uav:
+    role: uav_primary_outdoor_multimodel
+    intake_class: positive_uav
+    selected: true
+    status: g14_d_v2_mechanistic_audit_completed_g14_weights_terminated
+    pilot_only: false
+    stage_blockers:
+      - head_only_adaptation_terminated
+      - fresh_external_confirmation_required_for_any_future_candidate
+    dataset_name: Dataset of acoustic signals of unmanned aerial vehicles and speech obtained in external environmental conditions
+    publisher: Kielce University of Technology
+    creator: Marzena Miesikowska
+    doi: 10.5281/zenodo.15190811
+    record_url: https://zenodo.org/records/15190811
+    related_paper_doi: 10.3390/s24175663
+    metadata_path: data/g14_domain_generalization/_raw/kielce_17_uav/dataset_files_information.pdf
+    metadata_expected_bytes: 761259
+    metadata_expected_md5: f1c7222066aafb0cb926d6ea1d43e5a1
+    metadata_expected_sha256: e3678090e10d8927ba1bcba90e8920dc870a8a5246b6e6eee3f180fe2a644077
+    pilot_audio:
+      drone_id: D1
+      vehicle: MATRICE300
+      rotor_layout: X4
+      url: https://zenodo.org/api/records/15190811/files/X4_D1_MATRICE300.zip/content
+      path: data/g14_domain_generalization/_raw/kielce_17_uav/X4_D1_MATRICE300.zip
+      expected_bytes: 425563898
+      expected_md5: c6af83f75d91461cacffddcaddb69715
+      expected_sha256: 3561dca88d43f2429287696b8064067c42e987839ab9b2a3dff5efd0740a0897
+      coverage_status: structure_preflight_only
+    full_archive:
+      physical_uavs: 17
+      model_groups: 13
+      expected_primary_uav_recordings: 765
+      speech_token: sekwencja
+      planned_split_unit: acquisition_day_and_location
+      audit_path: artifacts/g14_domain_generalization/intake/kielce_full_archive_audit.json
+      integrity_verified: true
+      manifest_audit_path: artifacts/g14_domain_generalization/kielce_manifest/kielce_manifest_audit.json
+      grouped_manifest_verified: true
+      g13_and_dads_exact_audio_overlap: 0
+      combined_raw_manifest: artifacts/g14_domain_generalization/combined_raw_manifest/g14_combined_raw_manifest.csv
+      combined_raw_audit: artifacts/g14_domain_generalization/combined_raw_manifest/g14_combined_raw_audit.json
+      segment_cache_audit: artifacts/g14_domain_generalization/segment_cache/segment_cache_audit.json
+      sampler_preflight_audit: artifacts/g14_domain_generalization/sampler_preflight/sampler_preflight_audit.json
+      model_preflight_audit: artifacts/g14_domain_generalization/model_preflight/g14_head_only_preflight.json
+      model_preflight_audit_sha256: bd86fd4d04960220a2413c5cf4b81e8057c9ab3faa78ea7f91aef2a3c290d4f6
+      g14_a_summary: artifacts/g14_domain_generalization/runs/head_only/summary.json
+      g14_b_preflight: artifacts/g14_domain_generalization/regression/preflight.json
+      g14_b_summary: artifacts/g14_domain_generalization/regression/summary.json
+      g14_b_summary_sha256: 136edf81421560fa489e543e824c3fed38124b917b5093e03f51ceac2b315c7c
+      g14_c_calibration: artifacts/g14_domain_generalization/threshold_recalibration/calibration.json
+      g14_c_calibration_sha256: c9e30c19b6038ff768369825105a8dde81052b05321cffbde60b6c2f0ff5f46c
+      g14_c_evaluation_started: false
+      g14_d_pair_audit: artifacts/g14_domain_generalization/counterfactual_pairs/audit.json
+      g14_d_pair_audit_sha256: 10ea26c5adb10d08652b44712716a081c3c6c09e5cabeec18bdc77ad80052d64
+      g14_d_v1_evaluation: artifacts/g14_domain_generalization/counterfactual_evaluation/evaluation.json
+      g14_d_v1_evaluation_sha256: 428ef9d0f6465f96c944c9a92fd35ebbcb9c7ca935d9615ac12e212f1444b23a
+      g14_d_v1_monotonicity_valid: false
+      g14_d_v2_preflight: artifacts/g14_domain_generalization/counterfactual_evaluation_v2/preflight.json
+      g14_d_v2_preflight_sha256: 45fe1263bb28b83a0cbf14e3c25abf2457e774caa515e815090849a63bcaefe0
+      g14_d_v2_preflight_passed: true
+      g14_d_v2_evaluation: artifacts/g14_domain_generalization/counterfactual_evaluation_v2/evaluation.json
+      g14_d_v2_evaluation_sha256: 00aa2319d74105ae588894726dfee84914c317c29d29a7d69cd8071568b43852
+      g14_d_v2_evaluation_passed: true
+      g14_d_v2_monotonicity_valid: true
+      g14_d_v2_negative_probability_max_spread: 0.0
+      g14_weights_promotion_eligible: false
+      next_candidate_must_initialize_from_g7: true
+      next_candidate_requires_dads_and_mechanical_hard_negative_replay: true
+    format: WAV
+    source_group_unit: physical_uav_and_acquisition_day
+    acquisition_systems: [OLYMPUS_LS11_WAV, NORSONIC_140_NBF]
+    directly_trainable_waveform_systems: [OLYMPUS_LS11_WAV]
+    license:
+      access_level: open
+      expression: CC-BY-4.0
+      commercial_use: true
+      training_allowed: true
+      attribution_required: true
+      evidence_url: https://zenodo.org/records/15190811
+  tau_urban_2022:
+    role: multidevice_background
+    intake_class: negative_background
+    selected: true
+    status: grouped_manifest_merged
+    combined_coverage_status: sufficient
+    combined_coverage_audit: artifacts/g14_domain_generalization/intake/tau_intake_audit.json
+    grouped_manifest_audit: artifacts/g14_domain_generalization/tau_manifest/tau_manifest_audit.json
+    dataset_name: TAU Urban Acoustic Scenes 2022 Mobile Development
+    publisher: Tampere University
+    doi: 10.5281/zenodo.6337421
+    record_url: https://zenodo.org/records/6337421
+    metadata_url: https://zenodo.org/records/6337421/files/TAU-urban-acoustic-scenes-2022-mobile-development.meta.zip?download=1
+    metadata_path: data/g14_domain_generalization/_raw/tau_urban_2022/TAU-urban-acoustic-scenes-2022-mobile-development.meta.zip
+    metadata_expected_md5: 419b6ff6570f1030730352dc80cd8d15
+    metadata_expected_sha256: cd02880a68a3430b26e2065f152445ff145a7dcd25b47e22f9bfa5842a791ea7
+    pilot_audio:
+      part: 16
+      url: https://zenodo.org/records/6337421/files/TAU-urban-acoustic-scenes-2022-mobile-development.audio.16.zip?download=1
+      path: data/g14_domain_generalization/_raw/tau_urban_2022/TAU-urban-acoustic-scenes-2022-mobile-development.audio.16.zip
+      expected_bytes: 435379083
+      expected_md5: 6e2df8438c69f6789414aeba8cbad9d8
+      expected_sha256: a5f2a99d2efe68b5f2b7c348d30fde7b2c651ac64b9f2dd1e2cf744a2a645e11
+      coverage_status: insufficient_alone
+      additional_parts_recommended: [1, 9]
+    supplemental_audio:
+      - part: 1
+        url: https://zenodo.org/records/6337421/files/TAU-urban-acoustic-scenes-2022-mobile-development.audio.1.zip?download=1
+        path: data/g14_domain_generalization/_raw/tau_urban_2022/TAU-urban-acoustic-scenes-2022-mobile-development.audio.1.zip
+        expected_bytes: 1736050960
+        expected_md5: 8be14bdbd844481dce059ab31fbd2239
+        expected_sha256: df3d022277132a3f0bea00b1cb17db25cea840731a28d45398356a928674b29c
+      - part: 9
+        url: https://zenodo.org/records/6337421/files/TAU-urban-acoustic-scenes-2022-mobile-development.audio.9.zip?download=1
+        path: data/g14_domain_generalization/_raw/tau_urban_2022/TAU-urban-acoustic-scenes-2022-mobile-development.audio.9.zip
+        expected_bytes: 1790044829
+        expected_md5: 071f664c86639ad730f7be4e3c39d886
+        expected_sha256: 474acb875d941ea54ecd667b333214fba96d9a03e0bbc84929a02aca94c537df
+    full_audio_bytes_approx: 29527900160
+    format: WAV
+    scenes:
+      - airport
+      - shopping_mall
+      - metro_station
+      - street_pedestrian
+      - public_square
+      - street_traffic
+      - tram
+      - bus
+      - metro
+      - park
+    source_group_unit: location_and_recording_identifier
+    device_field_required: true
+    license:
+      access_level: open
+      expression: Other Non-Commercial
+      commercial_use: false
+      training_allowed: true
+      acknowledgement_required: true
+  uavirbase:
+    role: reserve_uav_localization_source
+    intake_class: positive_uav
+    selected: false
+    status: reserve_not_downloaded
+    dataset_name: UaVirBASE
+    reason: microphone_array_localization_data_not_primary_distant_binary_detection_source
+  droneaudioset:
+    role: reserve_ego_noise_source
+    intake_class: positive_uav
+    selected: false
+    status: reserve_domain_mismatch
+    dataset_name: DroneAudioSet
+    reason: drone_mounted_ego_noise_and_human_presence_task_not_ground_based_distant_detection
+forbidden:
+  path_tokens:
+    - external_confirmation_v2
+    - g13_external_confirmation
+    - unseen
+    - real_world
+  consumed_hash_registry: artifacts/g14_domain_generalization/p0_firewall/g13_audio_sha256.txt
+  dads_registry: artifacts/dads_dedup_v2/source_registry.csv
+policy:
+  download_does_not_authorize_training: true
+  intake_must_not_run_model_inference: true
+  split_by_source_group_only: true
+  final_sources_not_created_in_this_stage: true

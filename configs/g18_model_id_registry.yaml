@@ -1,0 +1,47 @@
+protocol: g18_p0_open_set_model_id_registry_v1
+seed: 42
+
+inputs:
+  segment_manifest:
+    path: artifacts/g14_domain_generalization/segment_cache/g14_segment_manifest.csv
+    sha256: 34f213e625bdb797ec9746b476ff6f76df9fd7dd664b5494b56cd0db4b1ae09d
+  segment_audit:
+    path: artifacts/g14_domain_generalization/segment_cache/segment_cache_audit.json
+    sha256: 2ffd16eed37936b5917932943073ec4105fac37968462dccf63ab35929f10b62
+  firewall_report:
+    path: artifacts/g14_domain_generalization/p0_firewall/test_report.json
+    sha256: 137153c0281ddd444989414c01e34012a04c7859aef69539cb4ff4aabccd6c24
+  consumed_hash_registry:
+    path: artifacts/g14_domain_generalization/p0_firewall/g13_audio_sha256.txt
+    sha256: ca8f9bb0a74675785d33a506cbced1cbfdaf564822e56e3141fa06042aa3fbae
+  g7_checkpoint:
+    path: artifacts_g7_panns_pt/runs/seed_42/best.pt
+    sha256: d357f194105ec27a61838e0f4c2e7575932e2dd861e529ef970b1fb467954cdc
+
+models:
+  known:
+    - Mavic2Pro
+    - Mavic2Zoom
+    - Mavic3
+    - MavicAir2
+    - MavicAir2S
+    - MavicMini2
+    - Phantom4
+    - YuneecH520
+    - YuneecH520ERTK
+  unknown_tune:
+    - Matrice300
+    - S900
+  unknown_holdout:
+    - X6D
+    - Y6
+
+known_split_fractions:
+  train: 0.70
+  tune: 0.15
+  holdout: 0.15
+
+sampling:
+  maximum_segments_per_recording: 20
+
+output_dir: artifacts/g18_model_identification/p0_registry

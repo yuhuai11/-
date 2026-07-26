@@ -1,0 +1,33 @@
+algorithm: g13_external_confirmation_intake_v1
+
+dataset:
+  name: external_confirmation_v2
+  root: data/external_confirmation_v2
+  source_registry: data/external_confirmation_v2/source_registry.csv
+  labels:
+    Background: 0
+    UAV: 1
+
+requirements:
+  minimum_samples_per_label: 1000
+  minimum_source_groups_per_label: 10
+  minimum_samples_per_source_group: 50
+  duration_seconds_min: 0.95
+  duration_seconds_max: 1.05
+  require_unique_audio_sha256: true
+  require_new_source_declaration: true
+
+overlap_audit:
+  dads_parquet_dir: date/DADS/data
+  reference_manifests:
+    - artifacts/val_ood/manifests/val_ood_manifest.csv
+    - artifacts/g9_hard_negatives/manifests/hn_train.csv
+    - artifacts/g9_hard_negatives/manifests/hn_guard.csv
+    - artifacts/external_evaluation/manifests/unseen_manifest.csv
+    - artifacts/external_evaluation/manifests/real_world_manifest.csv
+
+outputs:
+  manifest: artifacts/g13_external_confirmation/intake/external_confirmation_v2_manifest.csv
+  audit: artifacts/g13_external_confirmation/intake/intake_audit.json
+
+protocol_document: docs/G13新外部确认集接入与一次性评估方案.md

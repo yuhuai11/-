@@ -1,0 +1,39 @@
+dataset:
+  name: val_ood
+  root: /home/user1/JJZ/Acoustic-UAV-Identification/data/dataset_generalization_g1/val_ood
+  metadata: /home/user1/JJZ/Acoustic-UAV-Identification/data/dataset_generalization_g1/metadata.csv
+  labels:
+    Background: 0
+    UAV: 1
+
+audit:
+  dads_parquet_dir: date/DADS/data
+  final_test_manifests:
+    - artifacts/external_evaluation/manifests/unseen_manifest.csv
+    - artifacts/external_evaluation/manifests/real_world_manifest.csv
+  forbidden_source_tokens:
+    - DJI Mini 2
+    - RED5 Eagle
+    - background3
+    - extra_background4
+    - Real World Testing
+
+split:
+  seed: 20260716
+  tune_fraction: 0.50
+
+calibration:
+  experiments:
+    crnn_full:
+      run_dir: archive/historical_models/baselines/artifacts_crnn_full/runs
+    resnet10_cbam_full:
+      run_dir: archive/historical_models/baselines/artifacts_resnet10_cbam_full/runs
+  seeds: [42, 43, 44]
+  batch_size: 256
+  num_workers: 0
+  device: auto
+  target_recall: 0.80
+  target_specificity: 0.90
+  ece_bins: 15
+
+output_dir: artifacts/val_ood

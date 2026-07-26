@@ -1,0 +1,26 @@
+protocol: g14_controlled_segment_cache_v1
+raw_manifest: artifacts/g14_domain_generalization/combined_raw_manifest/g14_combined_raw_manifest.csv
+raw_audit: artifacts/g14_domain_generalization/combined_raw_manifest/g14_combined_raw_audit.json
+header_inventory: artifacts/g14_domain_generalization/decode_preflight/wav_header_inventory.csv
+decode_preflight_audit: artifacts/g14_domain_generalization/decode_preflight/decode_preflight_audit.json
+output_dir: artifacts/g14_domain_generalization/segment_cache
+audio:
+  target_sample_rate: 16000
+  clip_seconds: 1.0
+  output_dtype: float32
+  channels: mono
+  segmentation: nonoverlap_full_clips_only
+cache:
+  layout: split_memmap
+  safety_free_bytes_after_cache: 21474836480
+policy:
+  verify_raw_audio_sha256_during_decode: true
+  reject_nonfinite_samples: true
+  reject_exact_duplicate_segments: true
+  retain_zero_rms_segments_for_audit: true
+  peak_normalization_deferred_to_loader: true
+  source_split_must_be_preserved: true
+  partial_tail_is_dropped: true
+  loop_padding_is_forbidden: true
+  model_inference: false
+  training: false

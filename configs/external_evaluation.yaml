@@ -1,0 +1,39 @@
+datasets:
+  unseen:
+    root: /home/user1/JJZ/Acoustic-UAV-Identification/data/dataset_unseen_augmented_paper_distribution_available
+    labels:
+      Background: 0
+      UAV: 1
+  real_world:
+    root: /home/user1/JJZ/Acoustic-UAV-Identification/data/raw_recorded_audios/Real World Testing
+    labels:
+      no drone: 0
+      drone: 1
+
+experiments:
+  crnn_5000:
+    run_dir: artifacts/runs
+    training_scale: 5000_per_class
+  crnn_15000:
+    run_dir: archive/historical_models/baselines/artifacts_15000/runs
+    training_scale: 15000_per_class
+  crnn_full:
+    run_dir: archive/historical_models/baselines/artifacts_crnn_full/runs
+    training_scale: full
+  resnet10_cbam_15000:
+    run_dir: archive/historical_models/baselines/artifacts_resnet10_cbam_15000/runs
+    training_scale: 15000_per_class
+  resnet10_cbam_full:
+    run_dir: archive/historical_models/baselines/artifacts_resnet10_cbam_full/runs
+    training_scale: full
+
+evaluation:
+  thresholds: [0.40, 0.50, 0.65]
+  primary_threshold: 0.50
+  batch_size: 256
+  num_workers: 0
+  bootstrap_samples: 500
+  bootstrap_seed: 20260716
+  device: auto
+
+output_dir: artifacts/external_evaluation

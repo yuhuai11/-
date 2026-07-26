@@ -1,0 +1,53 @@
+algorithm: g11_final_dual_mode_v1
+
+models:
+  baseline_checkpoint: artifacts_g7_panns_pt/runs/seed_42/best.pt
+  candidate_checkpoints:
+    - archive/historical_models/failed_candidates/artifacts_g9_panns_hn_bce/runs/seed_42/best.pt
+    - archive/historical_models/failed_candidates/artifacts_g9_panns_hn_bce/runs/seed_43/best.pt
+    - archive/historical_models/failed_candidates/artifacts_g9_panns_hn_bce/runs/seed_44/best.pt
+
+calibration_sources:
+  baseline_calibration: artifacts/val_ood/calibration/g7_panns_pt/seed_42/calibration.json
+  baseline_low_fpr: artifacts/g7_low_fpr_candidate/g7_panns_pt_seed42/metrics.json
+  candidate_calibration: artifacts/g10_ensemble_source_robust/frozen_calibration.json
+
+final_data:
+  manifest_audit: artifacts/external_evaluation/manifests/manifest_audit.json
+  datasets:
+    unseen:
+      manifest: artifacts/external_evaluation/manifests/unseen_manifest.csv
+      expected_rows: 51240
+      expected_labels: {0: 25620, 1: 25620}
+    real_world:
+      manifest: artifacts/external_evaluation/manifests/real_world_manifest.csv
+      expected_rows: 546
+      expected_labels: {0: 273, 1: 273}
+
+evaluation:
+  batch_size: 128
+  num_workers: 0
+  device: auto
+  mixed_precision: true
+  bootstrap_samples: 2000
+  bootstrap_seed: 20260721
+  modes:
+    strict:
+      target_fpr: 0.01
+      candidate_threshold_source: source_robust_selected
+    balanced:
+      target_fpr: 0.05
+      candidate_threshold_source: pooled
+
+promotion:
+  require_ranking_noninferiority: true
+  require_each_dataset_and_mode:
+    fpr_not_higher: true
+    tpr_not_lower: true
+    f1_not_lower: true
+
+outputs:
+  frozen_protocol: artifacts/g11_final_dual_mode/frozen_protocol.json
+  evaluation_dir: artifacts/g11_final_dual_mode/final_evaluation
+
+protocol_document: docs/G11最终双工作模式评估协议.md

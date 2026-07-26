@@ -1,0 +1,36 @@
+protocol: g16_p2_seed42_multisnr_constrained_head_v1
+
+prerequisites:
+  p1_preflight:
+    path: artifacts/g16_multisnr_constrained/p1_preflight/preflight.json
+    sha256: 96c9a0e322699bae1e3d3f53746975cf99275494b01e71d5371ca9a8d4a8821c
+  base_training_config:
+    path: configs/g15_seed42_feasibility_p3b.yaml
+    sha256: d3cfd79dad0c4ebc719855b663d9cdd61445eed6f76ad8e7a47c1b203f36f1be
+
+counterfactual_tune:
+  manifest: artifacts/g14_domain_generalization/counterfactual_pairs/tune_pairs.csv
+  sha256: 8ffbdf04c787aa187c9714f932cecb6d812d9ea3f9cdd869aef3d14de2d8de64
+  rows: 4800
+  base_pairs: 1200
+
+pairing:
+  target_snr_db: [-15.0, -10.0, -5.0, 0.0]
+  epsilon: 1.0e-8
+  peak_limit: 0.99
+
+counterfactual_validation:
+  batch_size_pairs: 64
+  threshold: 0.5
+
+selection:
+  maximum_dads_f1_drop: 0.003
+  maximum_raw_g14_f1_drop: 0.001
+  minimum_each_snr_mean_lift_gain: 0.005
+  minimum_each_snr_ordering_gain: 0.0
+  maximum_each_snr_background_fpr_increase: 0.0
+  minimum_monotonicity_gain: 0.02
+  maximum_low_snr_tpr_drop: 0.005
+  low_snr_db: [-15.0, -10.0]
+
+output_dir: artifacts/g16_multisnr_constrained/p2_seed42

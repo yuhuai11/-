@@ -1,0 +1,47 @@
+data:
+  sample_rate: 16000
+  clip_seconds: 1.0
+  split_names:
+    train: train
+    val: tune
+    test: dev_holdout
+  input_audits:
+    - artifacts/g14_domain_generalization/segment_cache/segment_cache_audit.json
+    - artifacts/g14_domain_generalization/sampler_preflight/sampler_preflight_audit.json
+
+features:
+  type: waveform
+
+model:
+  type: panns_cnn14_16k
+  initialization: audioset
+  vendor_dir: artifacts/g7_panns/vendor/audioset_tagging_cnn/pytorch
+  checkpoint_path: artifacts/g7_panns/checkpoints/Cnn14_16k_mAP=0.438.pth
+  checkpoint_sha256: e2ee543a27919542c2ea03eabaa70b24dcd4e6c8e05621de6b67a94e4c5058e6
+  binary_checkpoint_path: artifacts_g7_panns_pt/runs/seed_42/best.pt
+  binary_checkpoint_sha256: d357f194105ec27a61838e0f4c2e7575932e2dd861e529ef970b1fb467954cdc
+  trainable_scope: binary_head_only
+  spec_augment: false
+  frontend_precision: float32
+
+train:
+  seeds: [42, 43, 44]
+  batch_size: 128
+  epochs: 15
+  learning_rate: 0.0001
+  lr_decay: 0.75
+  patience: 4
+  num_workers: 0
+  device: auto
+  mixed_precision: true
+  pos_weight: auto
+  sampling:
+    type: class_source_sqrt_balanced_batch
+    source_column: source_group
+    samples_per_epoch: 54400
+    source_weight_exponent: 0.5
+
+eval:
+  thresholds: [0.40, 0.50, 0.65]
+
+output_dir: artifacts/g14_domain_generalization/runs/head_only

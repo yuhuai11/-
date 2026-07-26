@@ -1,0 +1,50 @@
+data:
+  parquet_dir: date/DADS/data
+  manifest_dir: archive/historical_models/baselines/artifacts_15000/manifests
+  audio_cache_dir: archive/historical_models/baselines/artifacts_15000/audio_cache
+  sample_rate: 16000
+  clip_seconds: 1.0
+  per_class: 15000
+  manifest_seed: 42
+  splits:
+    train: 0.70
+    val: 0.15
+    test: 0.15
+
+# The paper does not disclose every MFCC parameter. n_mfcc=40 and n_mels=64
+# are explicit reproduction choices; frame length/hop and pre-emphasis follow it.
+features:
+  type: mfcc
+  n_mfcc: 40
+  n_mels: 64
+  n_fft: 512
+  win_length: 512
+  hop_length: 256
+  f_min: 20
+  f_max: 8000
+  preemphasis: 0.97
+
+model:
+  type: resnet10_cbam
+  channels: [64, 128, 256, 512]
+  dropout: 0.30
+  attention_stages: [0]
+  attention_reduction: 16
+  spatial_kernel: 7
+
+train:
+  seeds: [42, 43, 44]
+  batch_size: 32
+  epochs: 150
+  learning_rate: 0.001
+  patience: 10
+  num_workers: 0
+  device: auto
+  # The manifest is balanced by original file, but long no-drone files create
+  # more one-second segments. This compensates that segment-level imbalance.
+  pos_weight: auto
+
+eval:
+  thresholds: [0.40, 0.50, 0.65]
+
+output_dir: archive/historical_models/baselines/artifacts_resnet10_cbam_15000/runs

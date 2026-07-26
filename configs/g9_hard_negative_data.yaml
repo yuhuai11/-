@@ -1,0 +1,41 @@
+source:
+  root: /home/user1/JJZ/Acoustic-UAV-Identification/data/processed_url_audios/train/Background/github_U16_unknown
+  source_family: github_U16_ESC50
+  sample_rate: 16000
+  channels: 1
+  sample_width_bytes: 2
+  clip_seconds: 1
+  minimum_rms_dbfs_exclusive: -65.0
+  expected_groups_per_class: 40
+  expected_segments_per_group: 5
+  classes:
+    35: washing_machine
+    36: vacuum_cleaner
+    40: helicopter
+    41: chainsaw
+    44: engine
+    47: airplane
+
+split:
+  train_folds: [1, 2, 3, 4]
+  guard_folds: [5]
+  train_recordings_per_class: 32
+  guard_recordings_per_class: 8
+
+dads:
+  parquet_dir: date/DADS/data
+
+val_ood:
+  external_repo_root: /home/user1/JJZ/Acoustic-UAV-Identification
+  tune_manifest: artifacts/val_ood/manifests/val_ood_tune_manifest.csv
+  holdout_manifest: artifacts/val_ood/manifests/val_ood_holdout_manifest.csv
+
+provenance:
+  dataset: ESC-50-derived U16
+  upstream: https://github.com/karolpiczak/ESC-50
+  license: CC BY-NC
+  commercial_use_allowed: false
+  attribution_file_present: false
+  publication_ready: false
+
+output_dir: artifacts/g9_hard_negatives

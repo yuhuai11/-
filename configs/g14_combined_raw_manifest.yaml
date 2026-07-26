@@ -1,0 +1,18 @@
+protocol: g14_combined_raw_manifest_v1
+positive_manifest: artifacts/g14_domain_generalization/kielce_manifest/kielce_primary_uav_manifest.csv
+positive_audit: artifacts/g14_domain_generalization/kielce_manifest/kielce_manifest_audit.json
+background_manifest: artifacts/g14_domain_generalization/tau_manifest/tau_background_manifest.csv
+background_audit: artifacts/g14_domain_generalization/tau_manifest/tau_manifest_audit.json
+output_dir: artifacts/g14_domain_generalization/combined_raw_manifest
+expected:
+  positive_rows: 765
+  background_rows: 33894
+  total_rows: 34659
+  splits: [train, tune, dev_holdout]
+policy:
+  exact_hash_overlap_between_classes_forbidden: true
+  source_group_overlap_across_splits_forbidden: true
+  preserve_raw_recording_units: true
+  training_requires_controlled_decode_and_segmentation: true
+  model_inference: false
+  training: false

@@ -1,0 +1,23 @@
+protocol: g15_p2_development_registry_v1
+
+inputs:
+  p0_audit:
+    path: artifacts/g15_constrained_adaptation/p0_registry/audit.json
+    sha256: e2f4ad04e0106166774abfb5092b4ce18f1ef6b68261dd80e8aa8cacc73f93e0
+  p1_preflight:
+    path: artifacts/g15_constrained_adaptation/p1_preflight/preflight.json
+    sha256: 5e5814d77307ed04555553a76490236604daa49f51819750177dba822ca0a5e4
+  combined_training_registry:
+    path: artifacts/g15_constrained_adaptation/p0_registry/combined_train.csv
+    sha256: 820ece6d0d2ce51ea2d877492b1d473485a245c4d99e393eb9f5a3f862609a34
+  dads_val_manifest:
+    path: artifacts/dads_dedup_v2/val_manifest.csv
+    sha256: b0ed1dd1bcb85a41f5f241ce28c047f4d321efc101ae7880239358a7331aa8c8
+  g14_segment_manifest:
+    path: artifacts/g14_domain_generalization/segment_cache/g14_segment_manifest.csv
+    sha256: 34f213e625bdb797ec9746b476ff6f76df9fd7dd664b5494b56cd0db4b1ae09d
+  g13_hash_registry:
+    path: artifacts/g14_domain_generalization/p0_firewall/g13_audio_sha256.txt
+    sha256: ca8f9bb0a74675785d33a506cbced1cbfdaf564822e56e3141fa06042aa3fbae
+
+output_dir: artifacts/g15_constrained_adaptation/p2_development_registry

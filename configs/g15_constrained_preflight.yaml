@@ -1,0 +1,64 @@
+protocol: g15_p1_constrained_adaptation_preflight_v1
+
+registry:
+  audit:
+    path: artifacts/g15_constrained_adaptation/p0_registry/audit.json
+    sha256: e2f4ad04e0106166774abfb5092b4ce18f1ef6b68261dd80e8aa8cacc73f93e0
+  sources:
+    dads_replay:
+      path: artifacts/g15_constrained_adaptation/p0_registry/dads_replay.csv
+      sha256: 7dc3aabee8d2839c3a5376b2aee8bf9a141f57ca5a780f57d9be70dafa63ffbd
+      rows: 212338
+    g9_mechanical_hard_negative:
+      path: artifacts/g15_constrained_adaptation/p0_registry/g9_mechanical_hard_negative.csv
+      sha256: 9faf5385bfd308f7a0d706e60c55dbc444c4b071c804a07670675c9b4f58d5d1
+      rows: 631
+    kielce_uav:
+      path: artifacts/g15_constrained_adaptation/p0_registry/kielce_uav.csv
+      sha256: 59eaa1065293e257c0c7a379ccc8d6848f5b3db58bc18f05e42aad6fe5172166
+      rows: 32741
+    tau_background:
+      path: artifacts/g15_constrained_adaptation/p0_registry/tau_background.csv
+      sha256: bfb88b18598a57085b1498238a6213b51950bcdaafa1bc78362ea59d2adb402a
+      rows: 21660
+
+data:
+  sample_rate: 16000
+  clip_seconds: 1.0
+
+features:
+  type: waveform
+
+model:
+  type: panns_cnn14_16k
+  initialization: audioset
+  vendor_dir: artifacts/g7_panns/vendor/audioset_tagging_cnn/pytorch
+  checkpoint_path: artifacts/g7_panns/checkpoints/Cnn14_16k_mAP=0.438.pth
+  checkpoint_sha256: e2ee543a27919542c2ea03eabaa70b24dcd4e6c8e05621de6b67a94e4c5058e6
+  binary_checkpoint_path: artifacts_g7_panns_pt/runs/seed_42/best.pt
+  binary_checkpoint_sha256: d357f194105ec27a61838e0f4c2e7575932e2dd861e529ef970b1fb467954cdc
+  trainable_scope: binary_head_only
+  spec_augment: false
+  frontend_precision: float32
+
+preflight:
+  seed: 42
+  batch_per_source: 32
+  device: auto
+  mixed_precision: true
+  initial_logit_tolerance: 1.0e-6
+
+loss:
+  supervised_pos_weight: auto_from_fixed_batch
+  distill_weight: 1.0
+  pair_weight: 0.25
+  pair_margin: 0.5
+
+pairing:
+  target_snr_db: -10.0
+  epsilon: 1.0e-8
+  peak_limit: 0.99
+  rms_relative_tolerance: 1.0e-5
+  snr_absolute_tolerance_db: 1.0e-4
+
+output_dir: artifacts/g15_constrained_adaptation/p1_preflight

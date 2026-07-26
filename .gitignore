@@ -1,0 +1,49 @@
+# Generated experiment artifacts and model weights
+artifacts/
+artifacts_full/
+artifacts_g7_panns_pt/
+
+# Local datasets and downloaded archives
+data/
+date/
+
+# Historical binary artifacts; keep the archive indexes and documentation
+archive/historical_models/baselines/
+archive/historical_models/superseded_champions/
+archive/historical_models/failed_candidates/
+archive/historical_models/logs/
+
+# Runtime output
+logs/
+
+# Large binary formats must never enter the source repository
+*.pt
+*.pth
+*.ckpt
+*.npy
+*.npz
+*.parquet
+*.wav
+*.flac
+*.mp3
+*.zip
+*.tar
+*.tar.gz
+*.7z
+*.log
+
+# Local Codex/agent metadata
+.agents/
+.codex/
+
+# Python/editor caches
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+.vscode/
+.idea/

@@ -1,0 +1,24 @@
+protocol: g16_p1_multisnr_shared_gain_head_preflight_v1
+
+base_training_config:
+  path: configs/g15_seed42_feasibility_p3b.yaml
+  sha256: d3cfd79dad0c4ebc719855b663d9cdd61445eed6f76ad8e7a47c1b203f36f1be
+
+p4_analysis:
+  path: artifacts/g15_constrained_adaptation/p4_counterfactual_tune_diagnostic/analysis.json
+  sha256: c4d7ec38f20c6e3e4f056f1441588f89c7bfb67489d1a1f4f8ef035cbf6fb442
+
+pairing:
+  target_snr_db: [-15.0, -10.0, -5.0, 0.0]
+  epsilon: 1.0e-8
+  peak_limit: 0.99
+  rms_relative_tolerance: 1.0e-5
+  snr_absolute_tolerance_db: 1.0e-4
+
+preflight:
+  seed: 42
+  device: auto
+  mixed_precision: true
+  initial_logit_tolerance: 1.0e-6
+
+output: artifacts/g16_multisnr_constrained/p1_preflight/preflight.json

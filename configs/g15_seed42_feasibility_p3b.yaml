@@ -1,0 +1,96 @@
+protocol: g15_p3b_seed42_safe_improvement_early_stopping_v2
+
+prerequisites:
+  p1_preflight:
+    path: artifacts/g15_constrained_adaptation/p1_preflight/preflight.json
+    sha256: 5e5814d77307ed04555553a76490236604daa49f51819750177dba822ca0a5e4
+  p2_development_registry:
+    path: artifacts/g15_constrained_adaptation/p2_development_registry/audit.json
+    sha256: 6190f76ece81e09aeb0ebd3e7e7fc2b34247f328b4742bfb1979513a2e83f3c7
+
+registry:
+  train:
+    dads_replay:
+      path: artifacts/g15_constrained_adaptation/p0_registry/dads_replay.csv
+      sha256: 7dc3aabee8d2839c3a5376b2aee8bf9a141f57ca5a780f57d9be70dafa63ffbd
+      rows: 212338
+    g9_mechanical_hard_negative:
+      path: artifacts/g15_constrained_adaptation/p0_registry/g9_mechanical_hard_negative.csv
+      sha256: 9faf5385bfd308f7a0d706e60c55dbc444c4b071c804a07670675c9b4f58d5d1
+      rows: 631
+    kielce_uav:
+      path: artifacts/g15_constrained_adaptation/p0_registry/kielce_uav.csv
+      sha256: 59eaa1065293e257c0c7a379ccc8d6848f5b3db58bc18f05e42aad6fe5172166
+      rows: 32741
+    tau_background:
+      path: artifacts/g15_constrained_adaptation/p0_registry/tau_background.csv
+      sha256: bfb88b18598a57085b1498238a6213b51950bcdaafa1bc78362ea59d2adb402a
+      rows: 21660
+  development:
+    dads_validation:
+      path: artifacts/g15_constrained_adaptation/p2_development_registry/dads_validation.csv
+      sha256: 67f52ec51ba023e668a349541021f9e0a191900259d81da369aac1967812d8ac
+      rows: 46565
+    kielce_tune:
+      path: artifacts/g15_constrained_adaptation/p2_development_registry/kielce_tune.csv
+      sha256: 504fbefb571f8704cb745f5c0d9277a39d961ea174554a0b4d7b52f3700ece16
+      rows: 9873
+    tau_tune:
+      path: artifacts/g15_constrained_adaptation/p2_development_registry/tau_tune.csv
+      sha256: 2aff6de60e9029bb3bfab8528dc3012684da775056eea57c33b02eb6c54dd3ca
+      rows: 6114
+
+data:
+  sample_rate: 16000
+  clip_seconds: 1.0
+
+features:
+  type: waveform
+
+model:
+  type: panns_cnn14_16k
+  initialization: audioset
+  vendor_dir: artifacts/g7_panns/vendor/audioset_tagging_cnn/pytorch
+  checkpoint_path: artifacts/g7_panns/checkpoints/Cnn14_16k_mAP=0.438.pth
+  checkpoint_sha256: e2ee543a27919542c2ea03eabaa70b24dcd4e6c8e05621de6b67a94e4c5058e6
+  binary_checkpoint_path: artifacts_g7_panns_pt/runs/seed_42/best.pt
+  binary_checkpoint_sha256: d357f194105ec27a61838e0f4c2e7575932e2dd861e529ef970b1fb467954cdc
+  trainable_scope: binary_head_only
+  spec_augment: false
+  frontend_precision: float32
+
+train:
+  seed: 42
+  batch_size: 128
+  batch_composition:
+    dads_replay: 60
+    g9_mechanical_hard_negative: 4
+    kielce_uav: 32
+    tau_background: 32
+  batches_per_epoch: 425
+  epochs: 10
+  learning_rate: 5.0e-5
+  patience: 3
+  log_every_steps: 50
+  device: auto
+  mixed_precision: true
+
+loss:
+  distill_weight: 1.0
+  pair_weight: 0.25
+  pair_margin: 0.5
+
+pairing:
+  target_snr_db: -10.0
+  epsilon: 1.0e-8
+  peak_limit: 0.99
+
+validation:
+  samples_per_domain: 4096
+  batch_size: 128
+
+selection:
+  maximum_dads_f1_drop: 0.003
+  minimum_g14_tune_f1_gain: 0.005
+
+output_dir: artifacts/g15_constrained_adaptation/p3b_seed42

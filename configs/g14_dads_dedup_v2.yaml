@@ -1,0 +1,17 @@
+protocol: dads_raw_audio_sha256_dedup_v2
+input_manifest: artifacts_full/manifests/dads_all_seed42.csv
+parquet_dir: date/DADS/data
+output_dir: artifacts/dads_dedup_v2
+split_policy:
+  unit: raw_audio_sha256
+  strategy: retain_original_split_and_remove_exact_duplicates
+  split_order: [train, val, test]
+integrity:
+  verify_cache: true
+  require_zero_raw_hash_overlap: true
+  require_zero_recording_group_overlap: true
+  require_zero_source_path_overlap: true
+history:
+  overwrite_original_manifest: false
+  rewrite_audio_cache: false
+  start_training: false

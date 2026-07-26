@@ -1,0 +1,35 @@
+algorithm: g10_logit_ensemble_source_quantile_v1
+
+seeds: [42, 43, 44]
+
+inputs:
+  tune_manifest: artifacts/val_ood/manifests/val_ood_tune_manifest.csv
+  holdout_manifest: artifacts/val_ood/manifests/val_ood_holdout_manifest.csv
+  tune_predictions:
+    - artifacts/val_ood/predictions/tune/g9_panns_hn/seed_42/predictions.csv
+    - artifacts/val_ood/predictions/tune/g9_panns_hn/seed_43/predictions.csv
+    - artifacts/val_ood/predictions/tune/g9_panns_hn/seed_44/predictions.csv
+  holdout_predictions:
+    - artifacts/val_ood/predictions/holdout/g9_panns_hn/seed_42/predictions.csv
+    - artifacts/val_ood/predictions/holdout/g9_panns_hn/seed_43/predictions.csv
+    - artifacts/val_ood/predictions/holdout/g9_panns_hn/seed_44/predictions.csv
+  baseline_metrics: artifacts/g7_low_fpr_candidate/g7_panns_pt_seed42/metrics.json
+
+calibration:
+  target_fprs: [0.01, 0.05]
+  source_coverage: [0.90, 0.75]
+  minimum_tune_tpr_retention: 0.90
+  group_column: background_source
+  ensemble: arithmetic_mean_raw_logit
+  temperature_scaling: tune_labels_only
+  threshold_selection: tune_negative_source_quantile_only
+
+evaluation:
+  bootstrap_samples: 2000
+  bootstrap_seed: 20260721
+
+outputs:
+  frozen_calibration: artifacts/g10_ensemble_source_robust/frozen_calibration.json
+  evaluation_dir: artifacts/g10_ensemble_source_robust/evaluation
+
+protocol_document: docs/G10三种子集成来源鲁棒校准方案.md

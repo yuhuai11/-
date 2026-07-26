@@ -1,0 +1,36 @@
+protocol: g14_d_paired_counterfactual_evaluation_v2
+pair_audit: artifacts/g14_domain_generalization/counterfactual_pairs/audit.json
+pair_audit_sha256: 10ea26c5adb10d08652b44712716a081c3c6c09e5cabeec18bdc77ad80052d64
+pair_manifests:
+  tune: artifacts/g14_domain_generalization/counterfactual_pairs/tune_pairs.csv
+
+models:
+  - name: g7_seed42
+    role: baseline
+    checkpoint: artifacts_g7_panns_pt/runs/seed_42/best.pt
+    checkpoint_sha256: d357f194105ec27a61838e0f4c2e7575932e2dd861e529ef970b1fb467954cdc
+  - name: g15_p3b_epoch6
+    role: terminated_development_diagnostic
+    checkpoint: artifacts/g15_constrained_adaptation/p3b_seed42/seed_42/last.pt
+    checkpoint_sha256: 8112e7191791b6885f824310019a553c69abbcb81a9326b3ab226a74e7106e76
+
+mixing:
+  epsilon: 1.0e-8
+  common_pair_peak_limit: 0.99
+  expected_target_snr_db: [-15.0, -10.0, -5.0, 0.0]
+  rms_relative_tolerance: 1.0e-5
+  snr_absolute_tolerance_db: 1.0e-4
+
+runtime:
+  batch_size_pairs: 64
+  num_workers: 0
+  device: auto
+  mixed_precision: true
+
+statistics:
+  threshold: 0.5
+  bootstrap_samples: 1000
+  bootstrap_seed: 20260728
+  negative_probability_invariance_tolerance: 1.0e-6
+
+output_dir: artifacts/g15_constrained_adaptation/p4_counterfactual_tune_diagnostic

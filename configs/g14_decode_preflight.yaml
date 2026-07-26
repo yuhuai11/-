@@ -1,0 +1,21 @@
+protocol: g14_controlled_decode_preflight_v1
+raw_manifest: artifacts/g14_domain_generalization/combined_raw_manifest/g14_combined_raw_manifest.csv
+raw_audit: artifacts/g14_domain_generalization/combined_raw_manifest/g14_combined_raw_audit.json
+output_dir: artifacts/g14_domain_generalization/decode_preflight
+audio:
+  target_sample_rate: 16000
+  clip_seconds: 1.0
+  output_dtype: float32
+  channels: mono
+  segmentation: nonoverlap_full_clips_only
+cache:
+  layout: split_memmap
+  safety_free_bytes_after_cache: 21474836480
+policy:
+  source_split_must_be_preserved: true
+  partial_tail_is_dropped: true
+  loop_padding_is_forbidden: true
+  random_crop_is_forbidden: true
+  audio_decode_in_preflight: false
+  model_inference: false
+  training: false

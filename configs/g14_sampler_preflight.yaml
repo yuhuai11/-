@@ -1,0 +1,23 @@
+protocol: g14_source_balanced_sampler_preflight_v1
+segment_manifest: artifacts/g14_domain_generalization/segment_cache/g14_segment_manifest.csv
+segment_cache_audit: artifacts/g14_domain_generalization/segment_cache/segment_cache_audit.json
+output_dir: artifacts/g14_domain_generalization/sampler_preflight
+sampler:
+  type: class_source_sqrt_balanced_batch
+  source_column: source_group
+  batch_size: 128
+  samples_per_epoch: 54400
+  batches_per_epoch: 425
+  class_samples_per_batch: 64
+  source_weight_exponent: 0.5
+  seeds: [42, 43, 44]
+guardrails:
+  maximum_source_repeat_ratio: 5.0
+  minimum_source_coverage_ratio: 0.75
+  exact_class_balance_per_batch: true
+  no_repeat_within_source_before_cycle: true
+policy:
+  tune_and_dev_holdout_use_every_segment_once: true
+  automatic_pos_weight_from_sampling_distribution: true
+  model_inference: false
+  training: false

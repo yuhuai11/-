@@ -1,0 +1,62 @@
+baseline:
+  name: crnn_full_augmented_g2
+  config: configs/crnn_dads_full_augmented_g2.yaml
+  checkpoint: archive/historical_models/superseded_champions/artifacts_crnn_full_augmented_g2/runs/seed_42/best.pt
+  metrics: archive/historical_models/superseded_champions/artifacts_crnn_full_augmented_g2/runs/seed_42/metrics.json
+  calibration: artifacts/val_ood/calibration/crnn_full_augmented_g2/seed_42/calibration.json
+  model_type: crnn
+  feature_type: log_mel
+  predictions:
+    tune: artifacts/val_ood/predictions/tune/crnn_full_augmented_g2/seed_42/predictions.csv
+    holdout: artifacts/val_ood/predictions/holdout/crnn_full_augmented_g2/seed_42/predictions.csv
+
+candidate:
+  name: crnn_full_augmented_g4_low_snr
+  config: configs/crnn_dads_full_augmented_g4_low_snr.yaml
+  checkpoint: archive/historical_models/failed_candidates/artifacts_crnn_full_augmented_g4_low_snr/runs/seed_42/best.pt
+  metrics: archive/historical_models/failed_candidates/artifacts_crnn_full_augmented_g4_low_snr/runs/seed_42/metrics.json
+  calibration: artifacts/val_ood/calibration/crnn_full_augmented_g4_low_snr/seed_42/calibration.json
+  model_type: crnn
+  feature_type: log_mel
+  predictions:
+    tune: artifacts/val_ood/predictions/tune/crnn_full_augmented_g4_low_snr/seed_42/predictions.csv
+    holdout: artifacts/val_ood/predictions/holdout/crnn_full_augmented_g4_low_snr/seed_42/predictions.csv
+
+screening_seed: 42
+audit:
+  path: artifacts/g4_low_snr/delta_audit.json
+  baseline_config: configs/crnn_dads_full_augmented_g2.yaml
+  candidate_config: configs/crnn_dads_full_augmented_g4_low_snr.yaml
+keep_decision: keep_g2
+promote_decision: promote_g4
+
+guardrails:
+  threshold: 0.50
+  # Stage 1: small non-inferiority allowance before spending val_ood evaluation.
+  internal_screen:
+    - {split: val, metric: f1, max_drop: 0.0020}
+    - {split: val, metric: auc, max_drop: 0.0010}
+    - {split: test, metric: f1, max_drop: 0.0020}
+    - {split: test, metric: recall, floor: 0.9900}
+    - {split: test, metric: specificity, floor: 0.9900}
+    - {split: test, metric: auc, floor: 0.9950}
+  # Stage 2: G4 can replace G2 only under strict external Pareto non-inferiority.
+  external_promotion:
+    scenario: temperature_selected
+    checks:
+      - {metric: f1, max_drop: 0.0}
+      - {metric: balanced_accuracy, max_drop: 0.0}
+      - {metric: recall, max_drop: 0.0}
+      - {metric: specificity, max_drop: 0.0}
+      - {metric: auc, max_drop: 0.0}
+    minimum_improvement:
+      any:
+        - {metric: recall, delta: 0.0300}
+        - {metric: auc, delta: 0.0200}
+    subgroup_checks:
+      - {group_field: condition, group: snr_-10_db, metric: recall, min_delta: 0.0300}
+  deployment_targets:
+    recall: 0.80
+    specificity: 0.90
+
+output: artifacts/g4_low_snr/gate.json

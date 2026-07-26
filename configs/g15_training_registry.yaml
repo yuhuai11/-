@@ -1,0 +1,41 @@
+protocol: g15_p0_four_source_training_registry_v1
+
+inputs:
+  dads_train_manifest:
+    path: artifacts/dads_dedup_v2/train_manifest.csv
+    sha256: 8e093d56446e37a375f5455e1b2197b50a6e845528fc18319f4f0dfb95670a23
+  dads_audit:
+    path: artifacts/dads_dedup_v2/audit.json
+    sha256: 20f878552852d28642671f033f9812af3359c150435c78b3f35669b9b58c74c2
+  g9_train_manifest:
+    path: artifacts/g9_hard_negatives/manifests/hn_train.csv
+    sha256: d2d9c39c968a30d0043203cc13b9e619f98cb51676f6de07b83c48cb8471c109
+  g9_audit:
+    path: artifacts/g9_hard_negatives/audit.json
+    sha256: a56e353b320fe48e143c54eaf60919db5f893b0a0e35d7d20d1b865e7e29807d
+  g14_segment_manifest:
+    path: artifacts/g14_domain_generalization/segment_cache/g14_segment_manifest.csv
+    sha256: 34f213e625bdb797ec9746b476ff6f76df9fd7dd664b5494b56cd0db4b1ae09d
+  g14_segment_audit:
+    path: artifacts/g14_domain_generalization/segment_cache/segment_cache_audit.json
+    sha256: 2ffd16eed37936b5917932943073ec4105fac37968462dccf63ab35929f10b62
+  g13_hash_registry:
+    path: artifacts/g14_domain_generalization/p0_firewall/g13_audio_sha256.txt
+    sha256: ca8f9bb0a74675785d33a506cbced1cbfdaf564822e56e3141fa06042aa3fbae
+  g14_firewall_report:
+    path: artifacts/g14_domain_generalization/p0_firewall/test_report.json
+    sha256: 137153c0281ddd444989414c01e34012a04c7859aef69539cb4ff4aabccd6c24
+  g7_checkpoint:
+    path: artifacts_g7_panns_pt/runs/seed_42/best.pt
+    sha256: d357f194105ec27a61838e0f4c2e7575932e2dd861e529ef970b1fb467954cdc
+
+g9_mechanical_classes:
+  - chainsaw
+  - engine
+  - vacuum_cleaner
+  - washing_machine
+
+firewall:
+  expected_g13_hashes: 55000
+
+output_dir: artifacts/g15_constrained_adaptation/p0_registry

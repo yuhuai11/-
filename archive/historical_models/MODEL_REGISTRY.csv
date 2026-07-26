@@ -1,0 +1,12 @@
+category,experiment,model,data_scope,seeds,status,current_artifact_dir,config_path,document_path,reason
+baseline,CRNN-15000,CRNN Log-Mel,15000_per_class,"42;43;44",historical_baseline,archive/historical_models/baselines/artifacts_15000,configs/crnn_dads_15000.yaml,docs/外部泛化测试方案.md,保留用于训练规模对照
+baseline,CRNN-Full,CRNN Log-Mel,full,"42;43;44",historical_baseline,archive/historical_models/baselines/artifacts_crnn_full,configs/crnn_dads_full.yaml,docs/外部泛化测试方案.md,保留用于原始全量CRNN对照
+baseline,ResNet10-CBAM-15000,ResNet10-CBAM MFCC,15000_per_class,"42;43;44",historical_baseline,archive/historical_models/baselines/artifacts_resnet10_cbam_15000,configs/resnet10_cbam_dads_15000.yaml,docs/外部泛化测试方案.md,保留用于论文模型与训练规模对照
+baseline,ResNet10-CBAM-Full,ResNet10-CBAM MFCC,full,"42;43;44",historical_baseline,archive/historical_models/baselines/artifacts_resnet10_cbam_full,configs/resnet10_cbam_dads_full.yaml,docs/外部泛化测试方案.md,保留用于原始最强ResNet对照
+superseded_champion,G2,增强CRNN,full,42,superseded_by_g7,archive/historical_models/superseded_champions/artifacts_crnn_full_augmented_g2,configs/crnn_dads_full_augmented_g2.yaml,docs/G2全量CRNN声学增强方案.md,曾为阶段冠军后来被正式G7替代
+failed_candidate,G3,来源均衡增强CRNN,full,42,keep_g2,archive/historical_models/failed_candidates/artifacts_crnn_full_augmented_g3_source_balanced,configs/crnn_dads_full_augmented_g3_source_balanced.yaml,docs/G3来源均衡采样方案.md,内部F1相对基线明显下降
+failed_candidate,G4,低SNR增强CRNN,full,42,keep_g2,archive/historical_models/failed_candidates/artifacts_crnn_full_augmented_g4_low_snr,configs/crnn_dads_full_augmented_g4_low_snr.yaml,docs/G4低信噪比轻量覆盖方案.md,未通过预注册保护门槛
+failed_candidate,G5,MFCC64 CRNN,full,42,keep_g2,archive/historical_models/failed_candidates/artifacts_crnn_full_augmented_g5_mfcc64,configs/crnn_dads_full_augmented_g5_mfcc64.yaml,docs/G5全秩MFCC特征消融方案.md,Validation与Test F1非劣门失败
+failed_candidate,G6,时序注意力CRNN,full,42,keep_g2,archive/historical_models/failed_candidates/artifacts_crnn_full_augmented_g6_temporal_attention,configs/crnn_dads_full_augmented_g6_temporal_attention.yaml,docs/G6零初始化时序注意力池化方案.md,val_ood门控失败
+failed_candidate,G7-Scratch,PANNs Cnn14 Scratch,full,42,not_selected,archive/historical_models/failed_candidates/artifacts_g7_panns_scratch,configs/g7_panns_cnn14_16k_scratch.yaml,docs/G7预训练与低误报率泛化方案.md,未替代AudioSet预训练G7且训练经历GPU故障
+failed_candidate,G9,PANNs Cnn14 Hard-Negative,full,"42;43;44",do_not_promote,archive/historical_models/failed_candidates/artifacts_g9_panns_hn_bce,configs/g9_panns_cnn14_16k_hn_bce.yaml,docs/G9来源隔离困难负类适配方案.md,G10与G11冻结门控不允许整体替代G7

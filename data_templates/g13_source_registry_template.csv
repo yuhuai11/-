@@ -1,0 +1,3 @@
+source_group,label,acquisition_id,provenance,independent_from_existing,license
+background_site_01,0,batch_2026_new_01,new field recording,true,research_use_confirmed
+uav_site_01,1,batch_2026_new_01,new field recording,true,research_use_confirmed

@@ -1,0 +1,48 @@
+protocol: g14_kielce_grouped_manifest_v1
+dataset: kielce_17_uav
+archive_dir: data/g14_domain_generalization/_raw/kielce_17_uav
+official_md5_manifest: configs/g14_kielce_17_uav_md5.txt
+full_archive_audit: artifacts/g14_domain_generalization/intake/kielce_full_archive_audit.json
+g13_consumed_hashes: artifacts/g14_domain_generalization/p0_firewall/g13_audio_sha256.txt
+dads_raw_registry: artifacts/dads_dedup_v2/source_registry.csv
+output_dir: artifacts/g14_domain_generalization/kielce_manifest
+license: CC-BY-4.0
+speech_token: sekwencja
+expected:
+  official_files: 19
+  archives: 17
+  physical_uavs: 17
+  eligible_primary_uav_wavs: 765
+  train_source_groups_minimum: 10
+date_domains:
+  "230315":
+    date_iso: "2023-03-15"
+    location: Kielce
+    split: train
+  "230415":
+    date_iso: "2023-04-15"
+    location: Gdansk
+    split: train
+  "230416":
+    date_iso: "2023-04-16"
+    location: Debogorze
+    split: tune
+  "230417":
+    date_iso: "2023-04-17"
+    location: Debogorze
+    split: train
+  "230418":
+    date_iso: "2023-04-18"
+    location: Lapalice
+    split: dev_holdout
+policy:
+  split_unit: physical_uav_and_acquisition_date
+  complete_acquisition_date_must_not_cross_splits: true
+  dev_holdout_location_must_be_unseen: true
+  speech_wavs_forbidden: true
+  exact_duplicate_wavs_forbidden: true
+  g13_audio_hash_overlap_must_be_zero: true
+  dads_raw_audio_hash_overlap_must_be_zero: true
+  extract_audio_to_disk: false
+  model_inference: false
+  training: false

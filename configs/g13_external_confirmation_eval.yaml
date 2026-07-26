@@ -1,0 +1,43 @@
+algorithm: g13_external_confirmation_once_v1
+
+models:
+  baseline_checkpoint: artifacts_g7_panns_pt/runs/seed_42/best.pt
+  candidate_checkpoints:
+    - archive/historical_models/failed_candidates/artifacts_g9_panns_hn_bce/runs/seed_42/best.pt
+    - archive/historical_models/failed_candidates/artifacts_g9_panns_hn_bce/runs/seed_43/best.pt
+    - archive/historical_models/failed_candidates/artifacts_g9_panns_hn_bce/runs/seed_44/best.pt
+
+frozen_sources:
+  intake_audit: artifacts/g13_external_confirmation/intake/intake_audit.json
+  manifest: artifacts/g13_external_confirmation/intake/external_confirmation_v2_manifest.csv
+  source_registry: data/external_confirmation_v2/source_registry.csv
+  baseline_calibration: artifacts/val_ood/calibration/g7_panns_pt/seed_42/calibration.json
+  baseline_low_fpr: artifacts/g7_low_fpr_candidate/g7_panns_pt_seed42/metrics.json
+  candidate_calibration: artifacts/g12_strict_source_conformal/frozen_calibration.json
+  candidate_gate: artifacts/g12_strict_source_conformal/evaluation/metrics.json
+
+contract:
+  expected_rows: 55000
+  expected_unique_sha256: 55000
+  expected_labels: {0: 49612, 1: 5388}
+  expected_source_groups_by_label: {0: 29, 1: 29}
+  target_fpr: 0.01
+  candidate_seeds: [42, 43, 44]
+  candidate_ensemble: arithmetic_mean_raw_logit
+  balanced_mode_policy: retain_g7
+
+evaluation:
+  batch_size: 128
+  num_workers: 0
+  device: auto
+  mixed_precision: true
+  bootstrap_samples: 2000
+  bootstrap_seed: 20260723
+  low_fpr_max: 0.05
+
+outputs:
+  frozen_protocol: artifacts/g13_external_confirmation/evaluation/frozen_protocol.json
+  preflight: artifacts/g13_external_confirmation/evaluation/preflight.json
+  evaluation_dir: artifacts/g13_external_confirmation/evaluation/final_once
+
+protocol_document: docs/G13新外部确认集接入与一次性评估方案.md

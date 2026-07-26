@@ -1,0 +1,43 @@
+protocol: g14_d_paired_counterfactual_evaluation_v1
+pair_audit: artifacts/g14_domain_generalization/counterfactual_pairs/audit.json
+pair_audit_sha256: 10ea26c5adb10d08652b44712716a081c3c6c09e5cabeec18bdc77ad80052d64
+pair_manifests:
+  tune: artifacts/g14_domain_generalization/counterfactual_pairs/tune_pairs.csv
+  dev_holdout: artifacts/g14_domain_generalization/counterfactual_pairs/dev_holdout_pairs.csv
+
+models:
+  - name: g7_seed42
+    role: baseline
+    checkpoint: artifacts_g7_panns_pt/runs/seed_42/best.pt
+    checkpoint_sha256: d357f194105ec27a61838e0f4c2e7575932e2dd861e529ef970b1fb467954cdc
+  - name: g14_seed42
+    role: terminated_candidate
+    checkpoint: artifacts/g14_domain_generalization/runs/head_only/seed_42/best.pt
+    checkpoint_sha256: 6c7aff14ef01a545a02c79e75cf246122b63ee0dc3ff7061cfb26794ff3abad0
+  - name: g14_seed43
+    role: terminated_candidate
+    checkpoint: artifacts/g14_domain_generalization/runs/head_only/seed_43/best.pt
+    checkpoint_sha256: c11a49361497e685f14c07b7717070224195d7dd2f795e8dce3a979d98a21c39
+  - name: g14_seed44
+    role: terminated_candidate
+    checkpoint: artifacts/g14_domain_generalization/runs/head_only/seed_44/best.pt
+    checkpoint_sha256: 73faba8ac833c368315a41b29c366226651fa765a71cee77ed03cc6cd6395545
+
+mixing:
+  epsilon: 1.0e-8
+  common_pair_peak_limit: 0.99
+  rms_relative_tolerance: 1.0e-5
+  snr_absolute_tolerance_db: 1.0e-4
+
+runtime:
+  batch_size_pairs: 64
+  num_workers: 0
+  device: auto
+  mixed_precision: true
+
+statistics:
+  threshold: 0.5
+  bootstrap_samples: 1000
+  bootstrap_seed: 20260726
+
+output_dir: artifacts/g14_domain_generalization/counterfactual_evaluation

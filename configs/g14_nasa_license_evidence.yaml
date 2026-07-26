@@ -1,0 +1,32 @@
+protocol: g14_nasa_license_evidence_v1
+checked_at: 2026-07-23
+dataset:
+  name: NASA Small UAS Flyover Acoustics Data
+  identifier: 6s8fb29q
+  publisher: National Aeronautics and Space Administration
+  catalog_url: https://catalog.data.gov/dataset/small-uas-flyover-acoustics-data
+  nasa_portal_url: https://data.nasa.gov/dataset/small-uas-flyover-acoustics-data
+  access_level: public
+  dataset_specific_license: not_specified
+  restrictive_notice_found_in_archive_audit: false
+policy:
+  url: https://science.data.nasa.gov/about/license
+  title: NASA Science Data Licenses
+  relevant_rule: unmarked_data_from_a_nasa_led_mission_may_be_cc0
+  applicability_to_this_dataset: not_explicitly_established
+  caution: other_data_requires_source_and_usage_rights_validation
+contact:
+  name: Nikolas Zawodny
+  email: nikolas.s.zawodny@nasa.gov
+decision:
+  status: confirmation_required
+  training_allowed: false
+  extraction_for_integrity_audit_allowed: true
+  acceptable_resolution:
+    - dataset_page_or_archive_gains_an_explicit_reuse_license
+    - nasa_contact_confirms_model_training_and_research_publication_use_in_writing
+  prohibited_until_resolution:
+    - model_training
+    - calibration
+    - model_selection
+    - learned_feature_extraction

@@ -1,0 +1,130 @@
+baseline:
+  name: crnn_full_augmented_g2
+  config: configs/crnn_dads_full_augmented_g2.yaml
+  checkpoint: archive/historical_models/superseded_champions/artifacts_crnn_full_augmented_g2/runs/seed_42/best.pt
+  metrics: archive/historical_models/superseded_champions/artifacts_crnn_full_augmented_g2/runs/seed_42/metrics.json
+  val_probabilities: archive/historical_models/superseded_champions/artifacts_crnn_full_augmented_g2/runs/seed_42/val_probabilities.npy
+  val_labels: archive/historical_models/superseded_champions/artifacts_crnn_full_augmented_g2/runs/seed_42/val_labels.npy
+  test_probabilities: archive/historical_models/superseded_champions/artifacts_crnn_full_augmented_g2/runs/seed_42/test_probabilities.npy
+  test_labels: archive/historical_models/superseded_champions/artifacts_crnn_full_augmented_g2/runs/seed_42/test_labels.npy
+  calibration: artifacts/val_ood/calibration/crnn_full_augmented_g2/seed_42/calibration.json
+  model_type: crnn
+  feature_type: log_mel
+  temporal_pooling: mean
+  predictions:
+    tune: artifacts/val_ood/predictions/tune/crnn_full_augmented_g2/seed_42/predictions.csv
+    holdout: artifacts/val_ood/predictions/holdout/crnn_full_augmented_g2/seed_42/predictions.csv
+
+candidate:
+  name: crnn_full_augmented_g6_temporal_attention
+  config: configs/crnn_dads_full_augmented_g6_temporal_attention.yaml
+  checkpoint: archive/historical_models/failed_candidates/artifacts_crnn_full_augmented_g6_temporal_attention/runs/seed_42/best.pt
+  metrics: archive/historical_models/failed_candidates/artifacts_crnn_full_augmented_g6_temporal_attention/runs/seed_42/metrics.json
+  val_probabilities: archive/historical_models/failed_candidates/artifacts_crnn_full_augmented_g6_temporal_attention/runs/seed_42/val_probabilities.npy
+  val_labels: archive/historical_models/failed_candidates/artifacts_crnn_full_augmented_g6_temporal_attention/runs/seed_42/val_labels.npy
+  test_probabilities: archive/historical_models/failed_candidates/artifacts_crnn_full_augmented_g6_temporal_attention/runs/seed_42/test_probabilities.npy
+  test_labels: archive/historical_models/failed_candidates/artifacts_crnn_full_augmented_g6_temporal_attention/runs/seed_42/test_labels.npy
+  calibration: artifacts/val_ood/calibration/crnn_full_augmented_g6_temporal_attention/seed_42/calibration.json
+  model_type: crnn
+  feature_type: log_mel
+  temporal_pooling: attention
+  require_training_artifact_hashes: true
+  require_checkpoint_sha256: true
+  require_manifest_sha256: true
+  require_prediction_sha256: true
+  require_audio_hash_audit: true
+  predictions:
+    tune: artifacts/val_ood/predictions/tune/crnn_full_augmented_g6_temporal_attention/seed_42/predictions.csv
+    holdout: artifacts/val_ood/predictions/holdout/crnn_full_augmented_g6_temporal_attention/seed_42/predictions.csv
+
+screening_seed: 42
+dads_manifest: artifacts_full/manifests/dads_all_seed42.csv
+audit:
+  path: artifacts/g6_temporal_attention/delta_audit.json
+  baseline_inventory: artifacts/g6_temporal_attention/baseline_inventory.json
+  baseline_config: configs/crnn_dads_full_augmented_g2.yaml
+  candidate_config: configs/crnn_dads_full_augmented_g6_temporal_attention.yaml
+  require_protected_inventory_hashes: true
+  require_candidate_artifact_hashes:
+    - checkpoint
+    - metrics
+    - val_probabilities
+    - val_labels
+    - test_probabilities
+    - test_labels
+calibration_targets:
+  recall: 0.80
+  specificity: 0.90
+calibration_manifests:
+  tune: artifacts/val_ood/manifests/val_ood_tune_manifest.csv
+  holdout: artifacts/val_ood/manifests/val_ood_holdout_manifest.csv
+keep_decision: keep_g2
+promote_decision: promote_g6_dev_champion
+
+guardrails:
+  threshold: 0.50
+  internal_screen:
+    - {split: val, metric: f1, max_drop: 0.0010}
+    - {split: val, metric: balanced_accuracy, max_drop: 0.0020}
+    - {split: val, metric: recall, max_drop: 0.0020}
+    - {split: val, metric: specificity, max_drop: 0.0020}
+    - {split: val, metric: auc, max_drop: 0.0005}
+    - {split: test, metric: f1, max_drop: 0.0010}
+    - {split: test, metric: balanced_accuracy, max_drop: 0.0020}
+    - {split: test, metric: recall, max_drop: 0.0020}
+    - {split: test, metric: specificity, max_drop: 0.0020}
+    - {split: test, metric: auc, max_drop: 0.0005}
+  internal_subgroup_checks:
+    - {split: val, group_field: segment_kind, group: full, metric: recall, max_drop: 0.0100}
+    - {split: val, group_field: segment_kind, group: full, metric: specificity, max_drop: 0.0050}
+    - {split: val, group_field: segment_kind, group: tail_loop, metric: recall, max_drop: 0.0300}
+    - {split: val, group_field: segment_kind, group: tail_loop, metric: specificity, max_drop: 0.0300}
+    - {split: test, group_field: segment_kind, group: full, metric: recall, max_drop: 0.0100}
+    - {split: test, group_field: segment_kind, group: full, metric: specificity, max_drop: 0.0050}
+    - {split: test, group_field: segment_kind, group: tail_loop, metric: recall, max_drop: 0.0300}
+    - {split: test, group_field: segment_kind, group: tail_loop, metric: specificity, max_drop: 0.0300}
+  external_promotion:
+    scenario: temperature_selected
+    require_deployment_ready: false
+    checks:
+      - {metric: f1, max_drop: 0.0}
+      - {metric: balanced_accuracy, max_drop: 0.0}
+      - {metric: recall, max_drop: 0.0}
+      - {metric: specificity, max_drop: 0.0}
+      - {metric: auc, max_drop: 0.0}
+    minimum_improvement:
+      any:
+        - {metric: f1, delta: 0.0200}
+        - {metric: recall, delta: 0.0300}
+        - {metric: auc, delta: 0.0200}
+    subgroup_checks:
+      - {group_field: condition, group: uav_only, metric: recall, max_drop: 0.0200}
+      - {group_field: condition, group: snr_+10_db, metric: recall, max_drop: 0.0200}
+      - {group_field: condition, group: snr_+5_db, metric: recall, max_drop: 0.0200}
+      - {group_field: condition, group: snr_+0_db, metric: recall, max_drop: 0.0200}
+      - {group_field: condition, group: snr_-5_db, metric: recall, max_drop: 0.0200}
+      - {group_field: condition, group: snr_-10_db, metric: recall, max_drop: 0.0200}
+      - {group_field: condition, group: snr_-15_db, metric: recall, max_drop: 0.0200}
+      - {group_field: condition, group: background_only, metric: specificity, max_drop: 0.0200}
+    aggregate_subgroup_checks:
+      - {group_field: source_group, metric: recall, aggregation: macro, max_drop: 0.0200}
+      - {group_field: source_group, metric: specificity, aggregation: macro, max_drop: 0.0200}
+    paired_multiway_bootstrap:
+      cluster_fields: [uav_source, background_source]
+      method: multiway_bayesian
+      samples: 2000
+      seed: 20260717
+      confidence: 0.95
+      noninferiority_margins:
+        f1: 0.0200
+        balanced_accuracy: 0.0200
+        recall: 0.0200
+        specificity: 0.0200
+        auc: 0.0200
+      improvement_metrics: [f1, recall, auc]
+      improvement_lower_bound: 0.0
+  deployment_targets:
+    recall: 0.80
+    specificity: 0.90
+
+output: artifacts/g6_temporal_attention/gate.json

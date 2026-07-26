@@ -1,0 +1,36 @@
+protocol: g17_p0_high_rate_feasibility_audit_v1
+
+inputs:
+  raw_manifest:
+    path: artifacts/g14_domain_generalization/combined_raw_manifest/g14_combined_raw_manifest.csv
+    sha256: 119178a68654357bd59c2586147ed2b753bbc09759627f523f2ba38a5ba5ad4a
+  raw_audit:
+    path: artifacts/g14_domain_generalization/combined_raw_manifest/g14_combined_raw_audit.json
+    sha256: 963a58b4a6deba1a9c45175e9c61b87563b3f6f637fd57bf7ed9fac72aeddece
+  firewall_report:
+    path: artifacts/g14_domain_generalization/p0_firewall/test_report.json
+    sha256: 137153c0281ddd444989414c01e34012a04c7859aef69539cb4ff4aabccd6c24
+  consumed_hash_registry:
+    path: artifacts/g14_domain_generalization/p0_firewall/g13_audio_sha256.txt
+    sha256: ca8f9bb0a74675785d33a506cbced1cbfdaf564822e56e3141fa06042aa3fbae
+
+sampling:
+  max_recordings_per_source_split: 8
+  windows_per_recording: 3
+  window_seconds: 1.0
+
+gates:
+  minimum_original_sample_rate: 40000
+  minimum_high_rate_fraction: 1.0
+  minimum_above_8000_ratio: 0.0001
+  minimum_uav_high_frequency_fraction: 0.80
+  minimum_source_prevalence: 0.50
+  minimum_positive_source_groups: 10
+  minimum_positive_source_group_fraction: 0.75
+  minimum_directionless_auc: 0.55
+  maximum_positive_source_explained_fraction: 0.90
+
+firewall:
+  expected_consumed_hashes: 55000
+
+output_dir: artifacts/g17_dual_rate/p0_audit

@@ -1,0 +1,24 @@
+protocol: g15_p4_tune_counterfactual_analysis_v1
+inputs:
+  evaluation:
+    path: artifacts/g15_constrained_adaptation/p4_counterfactual_tune_diagnostic/evaluation.json
+    sha256: d54ad17c267728307b006cba645a4b207219a221439a90e61430c73df2d5793f
+  predictions:
+    path: artifacts/g15_constrained_adaptation/p4_counterfactual_tune_diagnostic/tune_predictions.csv
+    sha256: 4a193ebbab09ede97a4709e2c3858090de5135b69a78a6fdb22734f20e3f2548
+
+models:
+  baseline: g7_seed42
+  candidate: g15_p3b_epoch6
+
+expected:
+  rows: 4800
+  base_pairs: 1200
+  target_snr_db: [-15.0, -10.0, -5.0, 0.0]
+  threshold: 0.5
+
+statistics:
+  bootstrap_samples: 10000
+  bootstrap_seed: 20260728
+
+output: artifacts/g15_constrained_adaptation/p4_counterfactual_tune_diagnostic/analysis.json

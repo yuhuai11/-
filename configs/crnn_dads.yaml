@@ -1,0 +1,41 @@
+data:
+  parquet_dir: date/DADS/data
+  manifest_dir: artifacts/manifests
+  audio_cache_dir: artifacts/audio_cache
+  sample_rate: 16000
+  clip_seconds: 1.0
+  per_class: 5000
+  manifest_seed: 42
+  splits:
+    train: 0.70
+    val: 0.15
+    test: 0.15
+
+features:
+  n_mels: 64
+  n_fft: 512
+  win_length: 400
+  hop_length: 160
+  f_min: 20
+  f_max: 8000
+
+model:
+  conv_channels: [32, 64, 128]
+  gru_hidden: 128
+  gru_layers: 1
+  bidirectional: true
+  dropout: 0.30
+
+train:
+  seeds: [42, 43, 44]
+  batch_size: 32
+  epochs: 150
+  learning_rate: 0.001
+  patience: 10
+  num_workers: 0
+  device: auto
+
+eval:
+  thresholds: [0.40, 0.50, 0.65]
+
+output_dir: artifacts/runs

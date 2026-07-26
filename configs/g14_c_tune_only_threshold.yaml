@@ -1,0 +1,44 @@
+protocol: g14_c_tune_only_shared_threshold_v1
+seeds: [42, 43, 44]
+
+baseline:
+  dads_val_probabilities: artifacts_g7_panns_pt/runs/seed_42/val_probabilities.npy
+  dads_val_labels: artifacts_g7_panns_pt/runs/seed_42/val_labels.npy
+  val_ood_tune_predictions: artifacts/val_ood/predictions/tune/g7_panns_pt/seed_42/predictions.csv
+
+candidates:
+  checkpoint_pattern: artifacts/g14_domain_generalization/runs/head_only/seed_{seed}/best.pt
+  g14_tune_probability_pattern: artifacts/g14_domain_generalization/runs/head_only/seed_{seed}/val_probabilities.npy
+  g14_tune_label_pattern: artifacts/g14_domain_generalization/runs/head_only/seed_{seed}/val_labels.npy
+  val_ood_tune_probability_pattern: artifacts/g14_domain_generalization/regression/seed_{seed}/val_ood_tune_probabilities.npy
+
+manifests:
+  dads: artifacts_full/manifests/dads_all_seed42.csv
+  val_ood_tune: artifacts/val_ood/manifests/val_ood_tune_manifest.csv
+
+selection:
+  threshold_minimum: 0.50
+  threshold_maximum: 0.95
+  threshold_step: 0.01
+  dads_val_maximum_f1_drop: 0.005
+  dads_val_maximum_specificity_drop: 0.005
+  val_ood_tune_minimum_f1_gain: 0.0
+  g14_tune_minimum_f1: 0.995
+  rule: lowest_shared_threshold_passing_every_seed
+
+evaluation:
+  g14_b_summary: artifacts/g14_domain_generalization/regression/summary.json
+  dads_test_probability_pattern: artifacts/g14_domain_generalization/regression/seed_{seed}/dads_test_probabilities.npy
+  val_ood_holdout_probability_pattern: artifacts/g14_domain_generalization/regression/seed_{seed}/val_ood_holdout_probabilities.npy
+  g9_guard_probability_pattern: artifacts/g14_domain_generalization/regression/seed_{seed}/g9_guard_probabilities.npy
+  dads_test_manifest: artifacts_full/manifests/dads_all_seed42.csv
+  val_ood_holdout_manifest: artifacts/val_ood/manifests/val_ood_holdout_manifest.csv
+  g9_guard_manifest: artifacts/g9_hard_negatives/manifests/hn_guard.csv
+  g9_guard_audit: artifacts/g9_hard_negatives/audit.json
+
+runtime:
+  batch_size: 128
+  num_workers: 0
+  device: auto
+
+output_dir: artifacts/g14_domain_generalization/threshold_recalibration
