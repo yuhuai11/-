@@ -1,6 +1,32 @@
-# Audio-Based Drone Detection Via CRNN 复现
+# 声学无人机检测与开放集型号识别系统
 
-本工程复现论文 `Audio-Based Drone Detection Via CRNN: An Investigation into Threshold Sensitivity and Stability` 在 DADS 数据集上的二分类实验。
+本工程是一个基于深度学习的声学无人机检测与开放集型号识别实验系统。当前正式检测器
+为G7 PANNs Cnn14_16k，G18在冻结G7表征上进一步完成九个已知型号的录音级分类，并
+实验性地拒识未知型号。
+
+## 项目名称与兼容标识
+
+当前正式展示名称为：
+
+```text
+声学无人机检测与开放集型号识别系统
+Acoustic UAV Detection and Open-Set Model Identification
+```
+
+`ABDDV-CRNN`是工程早期复现论文
+`Audio-Based Drone Detection Via CRNN: An Investigation into Threshold Sensitivity and Stability`
+时形成的历史仓库名称。它继续作为以下兼容标识保留：
+
+- 现有仓库目录 `/home/user1/JJZ/ABDDV-CRNN`；
+- Python包导入名 `dads_crnn`；
+- 历史脚本路径、配置、检查点及审计产物中的冻结字符串。
+
+保留这些技术标识不表示当前正式模型仍是CRNN。早期CRNN现在只用于论文复现、历史
+对照和消融实验，不代表当前正式检测器。新文档、论文和界面应优先使用当前正式展示
+名称；只有在说明仓库路径、Python入口或历史实验时才使用`ABDDV-CRNN`。
+
+Python发行包的当前名称为`acoustic-uav-open-set-identification`；导入路径仍为
+`dads_crnn`，因此现有的`python -m dads_crnn.<module>`命令不受影响。
 
 ## 当前工程状态
 
@@ -27,11 +53,15 @@ G17-P0高频可行性审计已通过；正式结果位于
 `artifacts/g17_dual_rate/p0_audit/decision.json`。当前只允许进入P1结构与训练路径
 预检，G7仍是正式基线模型。
 
-G18在G7之后增加开放集机型识别，P0录音级隔离注册表已生成。该功能仍处于开发预检
-阶段，不能视为已经具备真实跨设备型号识别能力。
+G18在G7之后增加开放集机型识别，已经完成P0注册、P1预检、P2/P4型号头训练、
+P3系列Unknown方法比较、P5多种子复现和P6一次性最终Holdout。最终结果表明，九个
+已知型号具有较好的录音级分类可行性，但X6D/Y6未知型号拒识泛化失败，因此当前不能
+视为已经具备可靠的通用开放集或跨设备型号识别能力。
 
-G18-P1冻结G7训练路径已经在RTX 3080通过，P2 seed 42机型头可行性训练入口为
-`scripts/run_g18_p2_seed42.sh`。
+完整方法与最终结果见：
+
+- [G18方法原理与完整流程说明](docs/G18方法原理与完整流程说明.md)
+- [G18实验结果综合汇总报告](docs/G18实验结果综合汇总报告.md)
 
 历史CRNN、ResNet10-CBAM、G2–G6、G7 Scratch和G9产物已经集中到：
 
@@ -43,7 +73,9 @@ archive/historical_models/
 [历史模型归档索引](archive/historical_models/README.md)。归档模型只用于复现和对照，
 不得误认为当前正式模型。
 
-## 论文设置
+## 历史CRNN论文复现设置（非当前正式G7）
+
+以下设置和命令用于复现工程起点的CRNN论文实验，不用于训练当前正式G7或G18。
 
 - 数据集：DADS，16 kHz、16-bit、mono WAV。
 - 抽样：Drone 5000 个原始音频文件，No-Drone 5000 个原始音频文件，保持原始文件级类别均衡。
@@ -63,7 +95,7 @@ python -m pip install -e .
 
 当前代码不依赖 `torchaudio` 或 `librosa`，Mel 频谱在 PyTorch 中直接计算，减少版本匹配问题。
 
-## 生成复现 manifest
+## 生成历史CRNN复现manifest
 
 数据集已位于 `date/DADS/data`。下面命令会先跳过损坏/完全静音文件，再固定随机抽样每类 5000 个原始音频文件，并按原始文件划分 train/val/test。之后只在各自 split 内把长音频切成 1 秒片段，短音频和长音频最后不足 1 秒的尾段会循环补齐，并把生成的 1 秒片段缓存为 `.npy`。
 
@@ -77,7 +109,7 @@ python -m dads_crnn.prepare_manifest --config configs/crnn_dads.yaml --extract-a
 python -m dads_crnn.prepare_manifest --config configs/crnn_dads.yaml --per-class 20 --extract-audio
 ```
 
-## 训练
+## 训练历史CRNN
 
 ```powershell
 python -m dads_crnn.train --config configs/crnn_dads.yaml
@@ -97,13 +129,13 @@ python -m dads_crnn.train --config configs/crnn_dads.yaml --seeds 42
 - `val_probabilities.npy` / `val_labels.npy`：验证集阈值复算用输出。
 - `test_probabilities.npy` / `test_labels.npy`：测试集阈值复算用输出。
 
-## 复算阈值指标
+## 复算历史CRNN阈值指标
 
 ```powershell
 python -m dads_crnn.evaluate_thresholds --config configs/crnn_dads.yaml --run-dir artifacts/runs/seed_42
 ```
 
-## 计算原始文件级指标
+## 计算历史CRNN原始文件级指标
 
 训练默认按 1 秒 segment 计算指标。若要把同一个原始音频文件的所有 segment 聚合成一个预测，可运行：
 

@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "dads-crnn-reproduction"
+name = "acoustic-uav-open-set-identification"
 version = "0.1.0"
-description = "CRNN reproduction for audio-based drone detection on DADS."
+description = "Acoustic UAV detection and open-set model identification, evolved from a DADS CRNN reproduction."
 requires-python = ">=3.10"
 dependencies = [
   "numpy>=1.24",

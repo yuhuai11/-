@@ -1,11 +1,19 @@
-﻿# ABDDV CRNN 工程文件架构说明
+﻿# 声学无人机检测与开放集型号识别系统：工程文件架构说明
 
-本文档说明当前工程 `ABDDV CRNN` 的目录结构、代码模块职责、数据流和常用运行命令。该工程用于复现论文 **Audio-Based Drone Detection Via CRNN: An Investigation into Threshold Sensitivity and Stability** 中基于 DADS 数据集的音频无人机检测实验。
+本文档说明“声学无人机检测与开放集型号识别系统”的目录结构、代码模块职责、数据流
+和常用运行命令。工程起点是复现论文
+**Audio-Based Drone Detection Via CRNN: An Investigation into Threshold Sensitivity and Stability**
+中的DADS音频无人机检测实验，当前正式检测器已经演进为G7 PANNs Cnn14_16k，并在
+G18中增加冻结G7表征上的开放集型号识别实验。
+
+`ABDDV-CRNN`仍是历史仓库目录和兼容标识，不再作为当前模型结构的简称。现有目录、
+Python包`dads_crnn`、脚本路径以及冻结产物中的名称保持不变，避免破坏历史实验和
+可复现身份。
 
 ## 1. 工程总览
 
 ```text
-ABDDV CRNN/
+ABDDV-CRNN/                    历史仓库目录名，兼容保留
 ├─ README.md
 ├─ PROJECT_ARCHITECTURE.md
 ├─ requirements.txt
@@ -54,7 +62,7 @@ artifacts/g17_dual_rate/p0_audit/
 
 P0不训练模型，也不替代当前正式G7检查点。
 
-分层开放集型号识别开发入口：
+分层开放集型号识别入口：
 
 ```text
 configs/g18_model_id_registry.yaml
@@ -65,7 +73,9 @@ src/dads_crnn/model_identification.py
 artifacts/g18_model_identification/
 ```
 
-G18位于G7检测门之后；G7仍保持冻结并负责背景/无人机检测。
+G18位于G7检测门之后；G7仍保持冻结并负责背景/无人机检测。G18已经完成P0至P6
+实验链路和一次性最终Holdout。当前结论是九个Known型号的录音级分类具有可行性，
+但X6D/Y6的Unknown拒识未能泛化，不能视为已经具备可靠的通用开放集识别能力。
 
 ## 2. 原始数据目录
 
