@@ -1,0 +1,103 @@
+algorithm: g7_r1_structured_microphone_single_variable_v1
+
+inputs:
+  baseline_config: configs/g7_panns_cnn14_16k_pt.yaml
+  candidate_config: configs/g7_r1_structured_mic.yaml
+  training_manifest: artifacts_full/manifests/dads_all_seed42.csv
+  baseline_checkpoint: artifacts_g7_panns_pt/runs/seed_42/best.pt
+  baseline_internal_metrics: artifacts_g7_panns_pt/runs/seed_42/metrics.json
+  baseline_low_fpr_metrics: artifacts/g7_low_fpr_candidate/g7_panns_pt_seed42/metrics.json
+  val_ood_tune_manifest: artifacts/val_ood/manifests/val_ood_tune_manifest.csv
+  val_ood_holdout_manifest: artifacts/val_ood/manifests/val_ood_holdout_manifest.csv
+  baseline_val_ood_tune_predictions: artifacts/val_ood/predictions/tune/g7_panns_pt/seed_42/predictions.csv
+  baseline_val_ood_holdout_predictions: artifacts/val_ood/predictions/holdout/g7_panns_pt/seed_42/predictions.csv
+  g9_guard_manifest: artifacts/g9_hard_negatives/manifests/hn_guard.csv
+  g9_guard_audit: artifacts/g9_hard_negatives/audit.json
+  baseline_g9_guard_predictions: artifacts/g9_hard_negatives/evaluation/seed_42/predictions.csv
+  stage_b_audit: artifacts/g7_improvement/stage_b/audit.json
+  idmt_development_manifest: artifacts/g7_improvement/stage_b/development_segments_dedup.csv
+  r0_idmt_config: configs/g7_idmt_r0_gpu.yaml
+  r0_frozen_protocol: artifacts/g7_improvement/stage_c_r0_gpu/frozen_protocol.json
+  r0_idmt_metrics: artifacts/g7_improvement/stage_c_r0_gpu/evaluation/metrics.json
+  r0_idmt_predictions: artifacts/g7_improvement/stage_c_r0_gpu/evaluation/predictions.csv
+
+contract:
+  experimental_factor: replace_smooth_anchor_frequency_response_with_structured_microphone_iir
+  unchanged_frequency_response_probability: 0.50
+  training_seeds: [42]
+  training_data_role: historical_dads_only
+  idmt_training_rows: 0
+  idmt_calibration_audio_allowed: false
+  idmt_development_audio_allowed_before_training_complete: false
+  idmt_final_holdout_allowed: false
+  score_protocol:
+    primary_comparison: per_model_same_tune_calibration
+    temperature_fit: tune_all_labels_nll
+    threshold_selection: negative_only_conservative_empirical_quantile
+    target_fprs: [0.01, 0.05]
+    calibration_manifest_role: val_ood_tune
+    holdout_used: false
+    idmt_used: false
+    baseline_g7_mapping:
+      temperature: 2.258312527893372
+      strict_threshold: 0.7236399840238329
+      sensitivity_threshold: 0.5085329108689571
+    fixed_g7_mapping_role: deployment_compatibility_diagnostic_only
+  allowed_config_differences:
+    - output_dir
+    - train.augmentation.frequency_response_mode
+    - train.augmentation.microphone_highpass_hz
+    - train.augmentation.microphone_lowpass_hz
+    - train.augmentation.microphone_peaking_sections
+    - train.augmentation.microphone_peaking_center_hz
+    - train.augmentation.microphone_peaking_q
+    - train.augmentation.microphone_peaking_gain_db
+  reference_method:
+    paper: Improving acoustic drone detection generalization through pretraining and data augmentation
+    arxiv: "2605.31329"
+    inherited_ranges:
+      highpass_hz: [60.0, 120.0]
+      lowpass_hz: [6000.0, 8000.0]
+      peaking_sections: [2, 3]
+      peaking_gain_db: [-4.0, 4.0]
+    project_specific_preregistered_choices:
+      peaking_center_distribution: log_uniform
+      peaking_center_hz: [120.0, 6000.0]
+      peaking_q: [0.5, 2.0]
+      activation_probability_reason: kept_at_g7_value_for_single_variable_comparison
+
+promotion_gates:
+  dads_test_at_probability_0_5:
+    minimum_f1: 0.9949923708920188
+    minimum_roc_auc: 0.9993540433796199
+    minimum_recall: 0.9955672826126887
+    minimum_specificity: 0.9913047670058918
+  dads_validation_at_probability_0_5:
+    minimum_f1: 0.9949094449506047
+    minimum_roc_auc: 0.9993491688096940
+  val_ood_holdout_at_candidate_tune_calibrated_1pct_fpr:
+    minimum_tpr_at_strict_threshold: 0.2169863013698630
+    maximum_fpr_at_strict_threshold: 0.0426850605652759
+    minimum_roc_auc: 0.7816167333468538
+  g9_mechanical_guard_at_probability_0_5:
+    maximum_segment_fpr: 0.0725
+  idmt_development_at_candidate_tune_calibrated_operating_points:
+    maximum_overall_fpr_at_strict_threshold: 0.0567893409664009
+    maximum_me_vehicle_fpr_at_strict_threshold: 0.18804331013147717
+    maximum_se_fpr_at_strict_threshold: 0.0243592365371507
+    maximum_background_only_fpr_at_strict_threshold: 0.0118691250903832
+    maximum_overall_fpr_at_sensitivity_threshold: 0.1746745723437607
+    paired_session_bootstrap_samples: 2000
+    paired_session_bootstrap_seed: 20260731
+    require_one_sided_95pct_upper_fpr_delta_below_zero: true
+  decision:
+    advance_to_seeds_43_44_only_if_all_gates_pass: true
+    development_results_are_not_final_unbiased_claims: true
+
+outputs:
+  frozen_protocol: artifacts/g7_improvement/stage_d_r1/protocol/frozen_before_training.json
+  audit: artifacts/g7_improvement/stage_d_r1/protocol/audit.json
+  guard_evaluation: artifacts/g7_improvement/stage_d_r1/regression/guard_metrics.json
+  idmt_frozen_protocol: artifacts/g7_improvement/stage_d_r1/idmt_development/frozen_protocol.json
+  idmt_preflight: artifacts/g7_improvement/stage_d_r1/idmt_development/preflight.json
+  idmt_evaluation_dir: artifacts/g7_improvement/stage_d_r1/idmt_development/evaluation

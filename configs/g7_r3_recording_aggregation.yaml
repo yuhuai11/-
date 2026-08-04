@@ -1,0 +1,39 @@
+protocol: g7_r3_native_half_second_recording_aggregation_v1
+
+input:
+  clip_seconds: 0.5
+  complete_windows_only: true
+  loop_padding: false
+  zero_padding: false
+  time_stretch: false
+  preserve_temporal_order: true
+
+methods:
+  - {method: mean_probability}
+  - {method: mean_logit_then_sigmoid}
+  - {method: max_probability}
+  - {method: topk_mean_probability, topk_fraction: 0.25}
+  - {method: topk_mean_probability, topk_fraction: 0.50}
+
+target_fprs: [0.01, 0.05]
+
+selection:
+  split: val_ood_tune
+  primary: tpr_at_calibrated_fpr_0.01
+  tie_breakers:
+    - tpr_at_calibrated_fpr_0.05
+    - standardized_pauc_fpr_le_0.05
+    - pr_auc
+  threshold_source: tune_negative_recordings_only
+  holdout_used_for_selection: false
+
+evaluation:
+  split: val_ood_holdout
+  report:
+    - roc_auc
+    - pr_auc
+    - standardized_pauc_fpr_le_0.05
+    - tpr_at_calibrated_fpr_0.01
+    - empirical_fpr_at_target_0.01
+    - tpr_at_calibrated_fpr_0.05
+    - empirical_fpr_at_target_0.05

@@ -1,0 +1,72 @@
+protocol: g7_r2_reuter2026_aligned_ablation_v1
+
+reference:
+  title: Improving acoustic drone detection generalization through pretraining and data augmentation
+  authors: Paul M. Reuter; Mattes Ohlenbusch; Christian Rollwage
+  arxiv: "2605.31329v1"
+  local_pdf: docs/references/papers/reuter_2026/Reuter_2026_Improving_acoustic_drone_detection_generalization.pdf
+  pdf_sha256: 573361abc48c78c2c3f496e38c3bc1fa1579f02546a1a07c4753052a740dca7d
+
+scope:
+  task: known_binary_uav_detection_only
+  unknown_model_rejection_optimization: false
+  data_protocol: dads_native_half_second_content_component_v2
+  development_only: true
+  fresh_final_holdout_available: false
+
+ablations:
+  order: [pt_control, pt_mic, pt_mic_bg, pt_mic_bg_freq]
+  pt_control: configs/g7_r2_pt_control.yaml
+  pt_mic: configs/g7_r2_pt_mic.yaml
+  pt_mic_bg: configs/g7_r2_pt_mic_bg.yaml
+  pt_mic_bg_freq: configs/g7_r2_pt_mic_bg_freq.yaml
+  first_pass_seeds: [42]
+  confirmation_seeds: [42, 43, 44]
+  confirmation_rule: only_best_candidate_after_all_development_gates
+
+fixed_inputs:
+  training_manifest: artifacts/g7_leakage_fixed_v2/data/manifest.csv
+  training_audit: artifacts/g7_leakage_fixed_v2/data/audit.json
+  val_ood_tune: artifacts/val_ood/manifests/val_ood_tune_manifest.csv
+  val_ood_holdout: artifacts/val_ood/manifests/val_ood_holdout_manifest.csv
+  idmt_development: artifacts/g7_improvement/stage_b/development_segments_dedup.csv
+  future_final_holdout: data/future_final_holdout
+
+evaluation:
+  threshold_calibration: negative_only_conservative_empirical_quantile
+  calibration_split: val_ood_tune
+  target_fprs: [0.01, 0.05]
+  primary_metric: source_macro_tpr_at_calibrated_fpr_0_01
+  report_metrics:
+    - internal_accuracy
+    - internal_f1
+    - internal_roc_auc
+    - tpr_at_calibrated_fpr_0_01
+    - tpr_at_calibrated_fpr_0_05
+    - empirical_fpr
+    - roc_auc
+    - pr_auc
+    - standardized_pauc_fpr_le_0_05
+  idmt_note: requires_native_half_second_evaluation_and_recording_level_aggregation
+
+gates:
+  internal_test_role: consumed_internal_development_test
+  maximum_internal_f1_drop_from_matched_control: 0.005
+  maximum_val_ood_strict_fpr_increase_from_matched_control: 0.005
+  require_idmt_strict_fpr_noninferiority: true
+  require_paired_session_bootstrap_upper_delta_below_zero_for_promotion: true
+  no_candidate_selected_from_future_final_holdout: true
+  no_result_may_be_called_fresh_external_final: true
+
+deferred_components:
+  pitch_shift:
+    reason: exact_duration_preserving_SoX_or_equivalent_is_not_installed
+    admission_rule: add_as_a_separate_ablation_only_after_deterministic_audio_audit
+  two_second_context:
+    reason: current_leakage_fixed_native_unit_is_half_second
+    admission_rule: evaluate_recording_aggregation_without_rebuilding_old_one_second_shortcut
+
+outputs:
+  root: artifacts/g7_r2_generalization
+  val_ood: artifacts/g7_r2_generalization/val_ood
+  low_fpr: artifacts/g7_r2_generalization/low_fpr

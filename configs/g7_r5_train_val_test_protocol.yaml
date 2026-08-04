@@ -1,0 +1,42 @@
+protocol: g7_r5_explicit_train_validation_test_roles_v1
+
+task: binary_uav_detection
+sample_rate: 16000
+model_input_seconds: 0.5
+split_unit: original_recording_or_source_group
+
+roles:
+  train:
+    model_updates_allowed: true
+    sources: [DADS_train, Kielce_train, TAU_train, G9_train]
+  validation:
+    model_selection_allowed: true
+    threshold_calibration_allowed: true
+    sources: [DADS_val, Kielce_tune, TAU_tune]
+  internal_test:
+    model_selection_allowed: false
+    fresh_final_claim_allowed: false
+    sources: [DADS_test]
+    status: previously_consumed_internal_regression
+  locked_external_test:
+    model_selection_allowed: false
+    threshold_calibration_allowed: false
+    read_once_after_freeze: true
+    sources: [Kielce_dev_holdout, TAU_dev_holdout]
+    status: locked_unconsumed
+
+test_freeze_requirements:
+  - candidate_checkpoint_and_sha256
+  - threshold_calibrated_on_validation_only
+  - recording_aggregation
+  - random_seeds_or_predeclared_ensemble
+  - metrics_and_subgroups
+
+test_prohibitions:
+  - no_training
+  - no_early_stopping
+  - no_threshold_selection
+  - no_seed_selection
+  - no_hyperparameter_changes_followed_by_retest
+
+output_dir: artifacts/g7_r5_train_val_test

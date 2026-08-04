@@ -26,6 +26,75 @@ class CapturingBinaryHead(nn.Linear):
         return output
 
 
+class RecordingMeanFrequencyMasking(nn.Module):
+    """Frequency-only masking for log-Mel tensors shaped B x 1 x T x F."""
+
+    def __init__(
+        self,
+        *,
+        probability: float,
+        maximum_masks: int,
+        maximum_width_fraction: float,
+    ) -> None:
+        super().__init__()
+        if not 0.0 <= probability <= 1.0:
+            raise ValueError("frequency masking probability must be in [0, 1]")
+        if maximum_masks < 1:
+            raise ValueError("frequency masking maximum_masks must be positive")
+        if not 0.0 < maximum_width_fraction <= 1.0:
+            raise ValueError(
+                "frequency masking maximum_width_fraction must be in (0, 1]"
+            )
+        self.probability = float(probability)
+        self.maximum_masks = int(maximum_masks)
+        self.maximum_width_fraction = float(maximum_width_fraction)
+
+    def forward(self, features: torch.Tensor) -> torch.Tensor:
+        if not self.training or self.probability == 0.0:
+            return features
+        if features.ndim != 4 or features.size(1) != 1:
+            raise ValueError("frequency masking expects B x 1 x T x F features")
+        frequency_bins = int(features.size(-1))
+        maximum_width = max(
+            1,
+            min(
+                frequency_bins,
+                int(np.floor(frequency_bins * self.maximum_width_fraction)),
+            ),
+        )
+        output = features.clone()
+        apply_mask = torch.rand(features.size(0), device=features.device) < self.probability
+        for batch_index in torch.nonzero(apply_mask, as_tuple=False).flatten().tolist():
+            fill = features[batch_index].mean()
+            mask_count = int(
+                torch.randint(
+                    1,
+                    self.maximum_masks + 1,
+                    (),
+                    device=features.device,
+                ).item()
+            )
+            for _ in range(mask_count):
+                width = int(
+                    torch.randint(
+                        1,
+                        maximum_width + 1,
+                        (),
+                        device=features.device,
+                    ).item()
+                )
+                start = int(
+                    torch.randint(
+                        0,
+                        frequency_bins - width + 1,
+                        (),
+                        device=features.device,
+                    ).item()
+                )
+                output[batch_index, :, :, start : start + width] = fill
+        return output
+
+
 def file_sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -68,6 +137,7 @@ class PannsCnn14Binary(nn.Module):
         binary_checkpoint_path: str | None = None,
         binary_checkpoint_sha256: str | None = None,
         trainable_scope: str = "full",
+        frequency_masking: dict | None = None,
     ) -> None:
         super().__init__()
         if initialization not in {"scratch", "audioset"}:
@@ -96,7 +166,20 @@ class PannsCnn14Binary(nn.Module):
         # its head at the same RNG position. This keeps the new binary head
         # initialization identical for equal seeds.
         backbone.fc_audioset = CapturingBinaryHead(2048)
-        if not spec_augment:
+        if frequency_masking and bool(frequency_masking.get("enabled", False)):
+            if spec_augment:
+                raise ValueError(
+                    "PANNs built-in spec_augment and frequency-only masking "
+                    "cannot be enabled together"
+                )
+            backbone.spec_augmenter = RecordingMeanFrequencyMasking(
+                probability=float(frequency_masking.get("probability", 0.5)),
+                maximum_masks=int(frequency_masking.get("maximum_masks", 3)),
+                maximum_width_fraction=float(
+                    frequency_masking.get("maximum_width_fraction", 0.15)
+                ),
+            )
+        elif not spec_augment:
             backbone.spec_augmenter = nn.Identity()
         self.backbone = backbone
         self.initialization = initialization
@@ -115,19 +198,31 @@ class PannsCnn14Binary(nn.Module):
             if not isinstance(saved, dict) or not isinstance(saved.get("model"), dict):
                 raise ValueError("Unexpected binary PANNs checkpoint structure")
             self.load_state_dict(saved["model"], strict=True)
-        if trainable_scope not in {"full", "binary_head_only"}:
-            raise ValueError("trainable_scope must be 'full' or 'binary_head_only'")
+        if trainable_scope not in {
+            "full",
+            "binary_head_only",
+            "fc1_and_binary_head",
+        }:
+            raise ValueError(
+                "trainable_scope must be 'full', 'binary_head_only' or "
+                "'fc1_and_binary_head'"
+            )
         self.trainable_scope = trainable_scope
-        if trainable_scope == "binary_head_only":
+        if trainable_scope != "full":
             for parameter in self.parameters():
                 parameter.requires_grad = False
             for parameter in self.backbone.fc_audioset.parameters():
                 parameter.requires_grad = True
+            if trainable_scope == "fc1_and_binary_head":
+                for parameter in self.backbone.fc1.parameters():
+                    parameter.requires_grad = True
 
     def train(self, mode: bool = True) -> PannsCnn14Binary:
         super().train(mode)
-        if mode and self.trainable_scope == "binary_head_only":
+        if mode and self.trainable_scope != "full":
             self.backbone.eval()
+            if self.trainable_scope == "fc1_and_binary_head":
+                self.backbone.fc1.train(True)
             self.backbone.fc_audioset.train(True)
         return self
 
@@ -146,7 +241,7 @@ class PannsCnn14Binary(nn.Module):
             x = x.transpose(1, 3)
 
         feature_training = (
-            self.training and self.trainable_scope != "binary_head_only"
+            self.training and self.trainable_scope == "full"
         )
         if feature_training:
             x = self.backbone.spec_augmenter(x)

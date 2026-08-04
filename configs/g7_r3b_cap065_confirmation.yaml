@@ -1,0 +1,30 @@
+protocol: g7_r3b_cap065_multiseed_confirmation_v1
+
+reference:
+  selection_origin: seed_42_val_ood_tune
+  source_protocol: configs/g7_r3b_constrained_autopool.yaml
+  frozen_max_instance_weight: 0.65
+
+input:
+  clip_seconds: 0.5
+  complete_windows_only: true
+  loop_padding: false
+  zero_padding: false
+  time_stretch: false
+
+methods:
+  - method: constrained_autopool_probability
+    max_instance_weight: 0.65
+    eligible_for_selection: true
+
+target_fprs: [0.01, 0.05]
+
+selection:
+  aggregation_parameter_reselection: false
+  threshold_calibration: tune_negative_recordings_per_seed
+  holdout_used_for_selection: false
+
+evaluation:
+  seeds: [42, 43, 44]
+  aggregate_statistics: [mean, sample_standard_deviation]
+  result_role: consumed_development_holdout_multiseed_confirmation

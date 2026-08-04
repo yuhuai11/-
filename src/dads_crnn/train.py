@@ -103,6 +103,74 @@ def _training_criterion(config: dict, train_loader: DataLoader, device: torch.de
 
 def _build_loaders(config: dict, manifest_path: Path, seed: int) -> tuple[DataLoader, DataLoader, DataLoader]:
     data_cfg = config["data"]
+    if bool(data_cfg.get("require_segment_guard", False)) and bool(
+        data_cfg.get("require_leakage_fixed_guard", False)
+    ):
+        raise ValueError(
+            "Only one DADS manifest guard protocol may be enabled"
+        )
+    if bool(data_cfg.get("require_segment_guard", False)):
+        from .prepare_segment_guarded_manifest import validate_guarded_manifest
+
+        guard = validate_guarded_manifest(
+            manifest_path,
+            expected_segments_per_class=(
+                int(data_cfg["expected_segments_per_class"])
+                if data_cfg.get("expected_segments_per_class") is not None
+                else None
+            ),
+            split_ratios=data_cfg.get("splits"),
+            verify_cache_content=bool(
+                data_cfg.get("verify_segment_cache_hashes", False)
+            ),
+            root=Path("."),
+            target_samples=int(
+                int(data_cfg["sample_rate"])
+                * float(data_cfg["clip_seconds"])
+            ),
+        )
+        print(
+            "Validated segment leakage guard: "
+            f"protocol={guard['protocol']}, rows={guard['counts']['total']}"
+        )
+    if bool(data_cfg.get("require_leakage_fixed_guard", False)):
+        from .prepare_dads_leakage_fixed import validate_manifest
+
+        if not bool(data_cfg.get("verify_leakage_fixed_cache_file", False)):
+            raise ValueError(
+                "Leakage-fixed DADS training requires full cache-file and "
+                "cache-row verification"
+            )
+        split_names = data_cfg.get(
+            "split_names", {"train": "train", "val": "val", "test": "test"}
+        )
+        if split_names != {
+            "train": "train",
+            "val": "val",
+            "test": "test",
+        }:
+            raise ValueError(
+                "Leakage-fixed DADS roles must remain train/val/test"
+            )
+        audit_value = data_cfg.get("leakage_fixed_audit_path")
+        if not audit_value:
+            raise ValueError(
+                "require_leakage_fixed_guard requires leakage_fixed_audit_path"
+            )
+        guard = validate_manifest(
+            manifest_path,
+            Path(str(audit_value)),
+            verify_cache_file=bool(
+                data_cfg.get("verify_leakage_fixed_cache_file", False)
+            ),
+            expected_sample_rate=int(data_cfg["sample_rate"]),
+            expected_clip_seconds=float(data_cfg["clip_seconds"]),
+            expected_split_ratios=data_cfg.get("splits"),
+        )
+        print(
+            "Validated native half-second leakage guard: "
+            f"protocol={guard['protocol']}, rows={guard['counts']['total']}"
+        )
     batch_size = int(config["train"]["batch_size"])
     num_workers = int(config["train"]["num_workers"])
     split_names = data_cfg.get(

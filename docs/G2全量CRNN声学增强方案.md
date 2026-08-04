@@ -2,7 +2,7 @@
 
 ## 1. 实验目的
 
-OOD校准阶段证明temperature scaling能改善ECE/NLL，却无法同时达到80% Recall和90% Specificity；即使UAV-only的holdout Recall也只有约63%。G2因此验证一个单一问题：保持Full CRNN和所有验证/测试口径不变，只扩大训练音频的声学条件，是否能提高独立val_ood泛化。
+OOD校准阶段证明temperature scaling能改善ECE/NLL，却无法同时达到80% Recall和90% Specificity；即使UAV-only的holdout Recall也只有约63%。G2因此验证一个单一问题：保持Full CRNN和当时的验证/回归口径不变，只扩大训练音频的声学条件，是否能改善val_ood开发域表现。
 
 ## 2. 冻结项
 
@@ -14,7 +14,24 @@ OOD校准阶段证明temperature scaling能改善ECE/NLL，却无法同时达到
 - Adam、学习率、batch size、early stopping；
 - `pos_weight: auto`；
 - DADS val选择最佳checkpoint；
-- DADS test和两个最终外部测试集不参与训练及模型选择。
+- DADS原`test`行不参与梯度更新或checkpoint早停；两个最终外部测试集不参与训练及模型选择。
+
+需要按最终审计修正历史口径：`prepare_manifest`实际是在每个标签内随机把Parquet
+行（`AudioRef`）分配到Train、Validation和Test，再把每一行展开成1秒片段，因此
+同一Parquet行的片段不会跨split；它没有把`source_path`作为分组键。三个split的
+`source_path`交集为0只是事后身份审计结果，不能反推为按路径分组。原始WAV字节级
+SHA256审计发现15个重复哈希组，共涉及30条Parquet记录；每组保留1条并移除15条，
+其中6组的成员原本跨至少两个split。移除这15条冗余记录会连带移除244条历史1秒
+manifest片段。
+
+DADS原`test`还在本实验及后续多轮候选门禁中用于决定停止或继续，因此下文将其称为
+“历史DADS同数据源已消费内部回归集”，而不是独立测试。旧`dads_dedup_v2`只修复
+上述原始WAV字节级精确重复，仍复用把不足1秒音频进行`loop/tail_loop`扩展的历史
+1秒预处理与缓存，未消除标签相关的时长/重复捷径。新的主实验复现应改用
+`dads_native_half_second_content_component_v2`：从原始WAV构造16 kHz、8000采样点
+的原生0.5秒窗口，不循环、不补齐、不拉伸，并让原始与模型输入内容组件整体划分。
+因此本方案的历史数值只用于回归对照，不代表跨会话、跨设备、跨场景或跨无人机型号
+的独立泛化能力。
 
 首轮只训练seed 42。只有G2在DADS validation和val_ood holdout达到预设门槛，才扩展seed 43、44。
 
@@ -31,7 +48,8 @@ OOD校准阶段证明temperature scaling能改善ECE/NLL，却无法同时达到
 | +5 dB | 35% |
 | +10 dB | 30% |
 
-不使用DADS val/test、val_ood、Unseen或Real-world作为背景池。第一版不加入`-15/-10 dB`，避免极弱无人机正标签主导训练。
+不使用DADS val、历史原test（已消费内部回归）、val_ood、Unseen或Real-world作为
+背景池。第一版不加入`-15/-10 dB`，避免极弱无人机正标签主导训练。
 
 ### 3.2 两类共同声学扰动
 
@@ -88,7 +106,7 @@ nvidia-smi
 
 ## 7. 评估顺序
 
-1. 检查DADS val/test，要求F1相对Full CRNN下降不超过1个百分点；
+1. 检查DADS val和历史 DADS 同数据源已消费内部回归集，要求F1相对Full CRNN下降不超过1个百分点；
 2. 只在val_ood tune拟合temperature和阈值；
 3. 在val_ood holdout冻结确认；
 4. 达标后再运行seed 43、44；
@@ -113,7 +131,7 @@ echo $!
 G2通过门槛：
 
 ```text
-DADS Test F1下降 ≤ 1个百分点
+历史 DADS 内部回归F1下降 ≤ 1个百分点
 val_ood holdout Recall ≥ 80%
 val_ood holdout Specificity ≥ 90%
 ```
@@ -122,9 +140,10 @@ val_ood holdout Specificity ≥ 90%
 
 ## 8. Seed 42实测结果（2026-07-16）
 
-训练在epoch 43早停，最佳checkpoint为epoch 33，总耗时109.71分钟。DADS内部性能满足保护门槛：
+训练在epoch 43早停，最佳checkpoint为epoch 33，总耗时109.71分钟。历史 DADS 同数据源
+已消费内部回归指标满足保护门槛：
 
-| 模型 | DADS Test F1 | Recall | Specificity | AUC |
+| 模型 | 历史 DADS 内部回归F1 | Recall | Specificity | AUC |
 |---|---:|---:|---:|---:|
 | 原Full CRNN seed 42 | 0.99835 | 0.99824 | 0.99775 | 0.99989 |
 | G2 seed 42 | 0.99522 | 0.99467 | 0.99384 | 0.99970 |

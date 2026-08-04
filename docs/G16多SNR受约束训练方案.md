@@ -34,7 +34,7 @@ P1只执行一个固定batch的前向和反向，用于验证：
 - 监督、蒸馏、四档配对及总损失有限；
 - AMP反向梯度有限，显存适合RTX 3080；
 - 不执行optimizer step、不写检查点、不启动正式训练；
-- 不读取DADS test、G9 guard、G14 dev_holdout或G13。
+- 不读取历史DADS已消费内部回归集（原`test`）、G9 guard、G14 dev_holdout或G13。
 
 服务器命令：
 
@@ -97,8 +97,8 @@ bash scripts/run_g16_p2_seed42.sh preflight \
   2>&1 | tee logs/g16_p2_selection_preflight.log
 ```
 
-预检通过后才能运行seed42。DADS test、G9 guard、G14 dev_holdout、G13和最终外部数据
-继续保持关闭。
+预检通过后才能运行seed42。历史DADS已消费内部回归集（原`test`）、G9 guard、
+G14 dev_holdout、G13和最终外部数据继续保持关闭。
 
 ## 5. P2选择预检结果
 

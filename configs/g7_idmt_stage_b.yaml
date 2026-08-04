@@ -1,0 +1,44 @@
+protocol: g7_idmt_stage_b_identity_v1
+
+inputs:
+  archive:
+    path: data/g7_cross_domain/_raw/idmt_traffic/IDMT_Traffic.zip
+    sha256: 45c48d1625a03f1324425dd3714d6a2c615679d52e71ee5f9b7deb379a35b8eb
+  intake_manifest:
+    path: artifacts/g7_improvement/stage_a/idmt_traffic_manifest.csv
+    sha256: b903cdf53b89c7b3fb9119fc53103553f02b0eb5cb93f9462bf1f713a8b101ab
+  dads_source_registry:
+    path: artifacts/dads_dedup_v2/source_registry.csv
+    sha256: c20fc2a18c4332f770a504a90b112cc6918004f313173f463369a6f764c3266a
+
+contract:
+  allowed_roles: [calibration, development_test]
+  locked_role: final_holdout
+  locked_location: Hohenwarte
+  expected_files:
+    calibration: 2413
+    development_test: 14673
+    final_holdout: 420
+  expected_segments_per_file: 2
+  target_sample_rate: 16000
+  target_clip_seconds: 1.0
+  near_duplicate_policy: candidate_only_no_automatic_removal
+
+outputs:
+  audio_root: data/g7_cross_domain/idmt_traffic_active
+  stage_dir: artifacts/g7_improvement/stage_b
+  idmt_identity: artifacts/g7_improvement/stage_b/idmt_audio_identity.csv
+  idmt_fingerprints: artifacts/g7_improvement/stage_b/idmt_fingerprints.npz
+  calibration_manifest: artifacts/g7_improvement/stage_b/calibration_segments.csv
+  development_manifest: artifacts/g7_improvement/stage_b/development_segments.csv
+  dads_identity: artifacts/g7_improvement/stage_b/dads_pcm_identity.csv
+  dads_fingerprints: artifacts/g7_improvement/stage_b/dads_background_fingerprints.npz
+  exact_matches: artifacts/g7_improvement/stage_b/exact_matches.csv
+  fingerprint_candidates: artifacts/g7_improvement/stage_b/fingerprint_candidates.csv
+  clean_calibration_manifest: artifacts/g7_improvement/stage_b/calibration_segments_dedup.csv
+  clean_development_manifest: artifacts/g7_improvement/stage_b/development_segments_dedup.csv
+  audit: artifacts/g7_improvement/stage_b/audit.json
+
+state:
+  model_inference_started: false
+  training_started: false

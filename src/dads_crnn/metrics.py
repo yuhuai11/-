@@ -54,6 +54,12 @@ def file_level_metrics(
         raise ValueError(f"Unsupported file-level aggregation: {aggregation}")
 
     identity_candidates = (
+        # Combined-domain manifests normalize every source to one explicit
+        # recording identity even when their storage backends differ (for
+        # example DADS parquet rows versus Kielce/TAU memmaps).  Prefer that
+        # common identity over backend-specific columns that are null for a
+        # subset of rows.
+        ("recording_group",),
         ("parquet_file", "row_group", "row_in_group"),
         ("archive_path", "archive_member"),
         ("audio_sha256",),

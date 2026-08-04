@@ -428,7 +428,9 @@ class G9TrainingContractTests(unittest.TestCase):
                 require_identity=True,
                 artifact="test checkpoint",
             )
-            with self.assertRaisesRegex(ValueError, "lacks the required G9"):
+            with self.assertRaisesRegex(
+                ValueError, "lacks the required training input identity"
+            ):
                 train_panns._verify_checkpoint_inputs(
                     {}, identity, require_identity=True, artifact="old checkpoint"
                 )

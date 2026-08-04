@@ -1,0 +1,74 @@
+protocol: g22_p2_internal_known_holdout_report_v1
+
+inputs:
+  development_summary:
+    path: artifacts/g22_harmonic_fusion_multiseed/summary.json
+    sha256: 473481b8ce1e56c348fccc2bbfa2ba9856d2876d4a1bc48aa8f18c65e14b9c62
+  registry_audit:
+    path: artifacts/g18_model_identification/p0_registry/audit.json
+    sha256: dfa788540dbeef4b39fd6c6562d902921af8976bb576e8565e7f25e8629229b9
+  known_train:
+    path: artifacts/g18_model_identification/p0_registry/known_train.csv
+    sha256: 0f8e756f26da9e39e7aa2092d06b75d7d9fc3e19d8d2cff790cc3f432bd0c73e
+    rows: 8080
+  known_holdout:
+    path: artifacts/g18_model_identification/p0_registry/known_holdout.csv
+    sha256: c19ec0619932abda9a629cbd8ed7fa48fec57eb7e06bec0211ccf120caa991cf
+    rows: 1820
+    recordings: 91
+  known_train_harmonic:
+    path: artifacts/g22_harmonic_fusion_probe/known_train_segment_harmonic.npy
+    sha256: f788ec4982f3e75289eb73da57e38c53f4f5a49b874da35eac8d4dfd20835e2c
+  official_checkpoint:
+    path: artifacts/g7_panns/checkpoints/Cnn14_16k_mAP=0.438.pth
+    sha256: e2ee543a27919542c2ea03eabaa70b24dcd4e6c8e05621de6b67a94e4c5058e6
+  binary_checkpoint:
+    path: artifacts_g7_panns_pt/runs/seed_42/best.pt
+    sha256: d357f194105ec27a61838e0f4c2e7575932e2dd861e529ef970b1fb467954cdc
+  checkpoints:
+    "42":
+      path: artifacts/g18_model_identification/p2_seed42/seed_42/best.pt
+      sha256: 6e207318785ca1f970f888d74b10a0823a96088fe1b4dc87f6b71f39f7a67c20
+    "43":
+      path: artifacts/g18_model_identification/p4_multiseed/seed_43/best.pt
+      sha256: 1b4027ffbaab31ee79f7ad8beea9cd758195f9c750d7e22583b863a3b68e5ac3
+    "44":
+      path: artifacts/g18_model_identification/p4_multiseed/seed_44/best.pt
+      sha256: 14aa77173a9f06d7f7b3b626716f557089c8290918aa6374034b6fb612c264b1
+
+model:
+  initialization: audioset
+  vendor_dir: artifacts/g7_panns/vendor/audioset_tagging_cnn/pytorch
+  checkpoint_sha256: e2ee543a27919542c2ea03eabaa70b24dcd4e6c8e05621de6b67a94e4c5058e6
+  binary_checkpoint_sha256: d357f194105ec27a61838e0f4c2e7575932e2dd861e529ef970b1fb467954cdc
+  embedding_dim: 2048
+
+data:
+  sample_rate: 16000
+
+features:
+  n_fft: 16384
+  logarithmic_bands: 32
+  harmonics: 12
+
+classifier:
+  c: 0.1
+  maximum_iterations: 5000
+  seed: 42
+
+fusion:
+  harmonic_weight: 0.25
+  score_normalization: per_recording_center_std
+
+runtime:
+  device: auto
+  batch_size: 32
+
+reporting:
+  seeds: [42, 43, 44]
+  unit: recording
+  per_class_metrics: [precision, recall, f1, support]
+  confusion_matrix: true
+  aggregate: [mean, sample_std]
+
+output_dir: artifacts/g22_internal_holdout

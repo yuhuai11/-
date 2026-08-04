@@ -16,6 +16,86 @@ from dads_crnn.config import load_config
 
 
 class G7PannsTests(unittest.TestCase):
+    def test_amp_init_scale_is_shared_and_must_be_finite_positive(self) -> None:
+        self.assertEqual(
+            train_panns._amp_init_scale({"train": {}}),
+            65536.0,
+        )
+        self.assertEqual(
+            train_panns._amp_init_scale(
+                {"train": {"amp_init_scale": 16384.0}}
+            ),
+            16384.0,
+        )
+        for invalid in (0, -1, float("nan"), float("inf"), "invalid"):
+            with self.subTest(invalid=invalid):
+                with self.assertRaisesRegex(ValueError, "finite positive"):
+                    train_panns._amp_init_scale(
+                        {"train": {"amp_init_scale": invalid}}
+                    )
+
+    def test_amp_step_reports_scale_backoff_as_nonfinite_skip(self) -> None:
+        class FakeScaler:
+            def __init__(self, before: float, after: float) -> None:
+                self.scale = before
+                self.after = after
+                self.step_called = False
+
+            def get_scale(self) -> float:
+                return self.scale
+
+            def step(self, optimizer: object) -> None:
+                self.step_called = True
+
+            def update(self) -> None:
+                self.scale = self.after
+
+        overflow = FakeScaler(16384.0, 8192.0)
+        skipped, before, after = train_panns._amp_optimizer_step(
+            overflow, object(), enabled=True
+        )
+        self.assertTrue(overflow.step_called)
+        self.assertTrue(skipped)
+        self.assertEqual((before, after), (16384.0, 8192.0))
+
+        growth = FakeScaler(16384.0, 32768.0)
+        skipped, before, after = train_panns._amp_optimizer_step(
+            growth, object(), enabled=True
+        )
+        self.assertFalse(skipped)
+        self.assertEqual((before, after), (16384.0, 32768.0))
+
+    def test_leakage_fixed_protocol_requires_checkpoint_input_identity(self) -> None:
+        legacy = {"data": {}}
+        leakage_fixed = {
+            "data": {
+                "require_leakage_fixed_guard": True,
+            }
+        }
+        g9 = {"data": {"g9_audit_path": "audit.json"}}
+        self.assertFalse(train_panns._requires_training_input_identity(legacy))
+        self.assertTrue(
+            train_panns._requires_training_input_identity(leakage_fixed)
+        )
+        self.assertTrue(train_panns._requires_training_input_identity(g9))
+
+        identity = {"manifest_sha256": "a" * 64}
+        train_panns._verify_checkpoint_inputs(
+            {},
+            identity,
+            require_identity=False,
+            artifact="legacy checkpoint",
+        )
+        with self.assertRaisesRegex(ValueError, "required training input identity"):
+            train_panns._verify_checkpoint_inputs(
+                {},
+                identity,
+                require_identity=train_panns._requires_training_input_identity(
+                    leakage_fixed
+                ),
+                artifact="leakage-fixed checkpoint",
+            )
+
     def test_history_is_written_as_atomic_csv(self) -> None:
         rows = [
             {
@@ -66,6 +146,15 @@ class G7PannsTests(unittest.TestCase):
         config["train"]["device"] = "cpu"
         with patch.object(train_panns, "_build_loaders") as build_loaders:
             with self.assertRaisesRegex(RuntimeError, "requires the server CUDA GPU"):
+                train_panns.preflight(config, Path("unused.csv"), 42)
+        build_loaders.assert_not_called()
+
+    def test_preflight_rejects_invalid_amp_scale_before_loading_data(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        config = load_config(root / "configs/g7_panns_cnn14_16k_pt.yaml")
+        config["train"]["amp_init_scale"] = 0
+        with patch.object(train_panns, "_build_loaders") as build_loaders:
+            with self.assertRaisesRegex(ValueError, "finite positive"):
                 train_panns.preflight(config, Path("unused.csv"), 42)
         build_loaders.assert_not_called()
 

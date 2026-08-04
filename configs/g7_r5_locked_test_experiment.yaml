@@ -1,0 +1,51 @@
+protocol: g7_r5_locked_external_comparative_test_v1
+purpose: independent_comparison_not_test_set_model_selection
+
+data:
+  validation_manifest: artifacts/g7_r5_train_val_test/validation_manifest.csv
+  locked_test_manifest: artifacts/g7_r5_train_val_test/locked_unseen_external_test/manifest.csv
+  access_lock: artifacts/g7_r5_train_val_test/locked_unseen_external_test/ACCESS_LOCK.json
+  sample_rate: 16000
+  clip_seconds: 0.5
+
+systems:
+  g7_r2_baseline:
+    aggregation: single_checkpoint
+    checkpoints:
+      - artifacts/g7_r2_generalization/ablations/pt_mic_bg_freq/runs/seed_42/best.pt
+  g7_r4c_ensemble:
+    aggregation: uniform_probability_mean
+    checkpoints:
+      - artifacts/g7_r4_cross_dataset/r4c_lowsnr_conservative/runs/seed_42/best.pt
+      - artifacts/g7_r4_cross_dataset/r4c_lowsnr_conservative/runs/seed_43/best.pt
+      - artifacts/g7_r4_cross_dataset/r4c_lowsnr_conservative/runs/seed_44/best.pt
+
+thresholds:
+  fixed: 0.5
+  calibration_source: validation_TAU_negatives_only
+  target_fprs: [0.01, 0.05]
+  policy: conservative_empirical_quantile
+
+recording_aggregation: mean_probability_over_native_half_second_views
+
+metrics:
+  - accuracy
+  - precision
+  - recall
+  - f1
+  - false_positive_rate
+  - roc_auc
+  - pr_auc
+  - standardized_pauc_fpr_le_0_05
+  - recall_by_uav_subtype
+  - recall_by_seen_unseen_model_type
+  - source_macro_recall
+  - worst_source_recall
+
+post_test_policy:
+  allow_retraining_from_test_result: false
+  allow_threshold_recalibration_from_test: false
+  allow_seed_selection_from_test: false
+  allow_repeat_on_same_locked_test: false
+
+output_dir: artifacts/g7_r5_train_val_test/locked_test_experiment

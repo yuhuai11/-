@@ -1,0 +1,60 @@
+protocol: g21_p1_known_fc1_transfer_v1
+
+inputs:
+  known_train:
+    path: artifacts/g18_model_identification/p0_registry/known_train.csv
+    sha256: 0f8e756f26da9e39e7aa2092d06b75d7d9fc3e19d8d2cff790cc3f432bd0c73e
+  known_tune:
+    path: artifacts/g18_model_identification/p0_registry/known_tune.csv
+    sha256: f3467b1654d23a533f58fa2f5cb93da2f3a9388473e657f90d71a7cb3c9b5d4b
+  registry_audit:
+    path: artifacts/g18_model_identification/p0_registry/audit.json
+    sha256: dfa788540dbeef4b39fd6c6562d902921af8976bb576e8565e7f25e8629229b9
+  p1_preflight:
+    path: artifacts/g18_model_identification/p1_preflight/report.json
+    sha256: 3ee645d4ca65da4b0a49300b371a5450877896163ce3536f426477d2b05a0f7c
+
+data:
+  sample_rate: 16000
+  clip_seconds: 1.0
+  split_unit: audio_sha256
+
+model:
+  initialization: audioset
+  vendor_dir: artifacts/g7_panns/vendor/audioset_tagging_cnn/pytorch
+  checkpoint_path: artifacts/g7_panns/checkpoints/Cnn14_16k_mAP=0.438.pth
+  checkpoint_sha256: e2ee543a27919542c2ea03eabaa70b24dcd4e6c8e05621de6b67a94e4c5058e6
+  binary_checkpoint_path: artifacts_g7_panns_pt/runs/seed_42/best.pt
+  binary_checkpoint_sha256: d357f194105ec27a61838e0f4c2e7575932e2dd861e529ef970b1fb467954cdc
+  embedding_dim: 2048
+  trainable_detector_prefixes:
+    - backbone.fc1.
+  classifier: layer_norm_linear
+
+train:
+  seed: 42
+  device: auto
+  batch_size: 64
+  epochs: 20
+  patience: 5
+  head_learning_rate: 0.0003
+  detector_learning_rate: 0.00001
+  weight_decay: 0.0001
+  l2_sp_weight: 0.000001
+  label_smoothing: 0.05
+  gradient_clip_norm: 5.0
+  log_every_steps: 10
+
+baseline:
+  name: g18_seed42_frozen_g7
+  tune_recording_accuracy: 0.978021978021978
+  tune_recording_macro_f1: 0.9796749298665007
+  tune_recording_minimum_recall: 0.8571428571428571
+
+gates:
+  minimum_tune_recording_accuracy: 0.97
+  minimum_tune_recording_macro_f1: 0.97
+  minimum_tune_recording_recall: 0.85
+
+preflight_output_dir: artifacts/g21_fc1_transfer/p0_preflight
+output_dir: artifacts/g21_fc1_transfer/p1_training

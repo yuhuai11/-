@@ -1,0 +1,38 @@
+protocol: g7_r3b_generalized_constrained_autopool_v1
+
+reference:
+  title: Adaptive pooling operators for weakly labeled sound event detection
+  authors: Brian McFee; Justin Salamon; Juan Pablo Bello
+  arxiv: "1804.10070v2"
+  formula: equations_8_and_11
+
+input:
+  clip_seconds: 0.5
+  complete_windows_only: true
+  loop_padding: false
+  zero_padding: false
+  time_stretch: false
+
+methods:
+  - {method: mean_probability, eligible_for_selection: false}
+  - {method: max_probability, eligible_for_selection: false}
+  - {method: constrained_autopool_probability, max_instance_weight: 0.55}
+  - {method: constrained_autopool_probability, max_instance_weight: 0.65}
+  - {method: constrained_autopool_probability, max_instance_weight: 0.75}
+
+target_fprs: [0.01, 0.05]
+
+selection:
+  split: val_ood_tune
+  eligible_methods: constrained_autopool_only
+  primary: tpr_at_calibrated_fpr_0.01
+  tie_breakers:
+    - tpr_at_calibrated_fpr_0.05
+    - standardized_pauc_fpr_le_0.05
+    - pr_auc
+  holdout_used_for_selection: false
+
+constraint_note: >-
+  Standard CAP uses maximum instance weight 0.5 and therefore equals mean pooling
+  for a two-window recording. This protocol evaluates equation-11 generalized caps
+  above 0.5 while still preventing unrestricted max pooling.

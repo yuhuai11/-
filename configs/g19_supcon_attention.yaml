@@ -1,0 +1,113 @@
+protocol: g19_p1_supcon_attention_recording_v1
+
+inputs:
+  known_train:
+    path: artifacts/g18_model_identification/p0_registry/known_train.csv
+    sha256: 0f8e756f26da9e39e7aa2092d06b75d7d9fc3e19d8d2cff790cc3f432bd0c73e
+    rows: 8080
+    recordings: 404
+  known_tune:
+    path: artifacts/g18_model_identification/p0_registry/known_tune.csv
+    sha256: f3467b1654d23a533f58fa2f5cb93da2f3a9388473e657f90d71a7cb3c9b5d4b
+    rows: 1820
+    recordings: 91
+  unknown_tune:
+    path: artifacts/g18_model_identification/p0_registry/unknown_tune.csv
+    sha256: 7088bef8de96c1ea861389c5d2a268fe357a6e7755fc9cb6747d0f2b2fbef8fd
+    rows: 1800
+    recordings: 90
+  registry_audit:
+    path: artifacts/g18_model_identification/p0_registry/audit.json
+    sha256: dfa788540dbeef4b39fd6c6562d902921af8976bb576e8565e7f25e8629229b9
+  segment_cache_audit:
+    path: artifacts/g14_domain_generalization/segment_cache/segment_cache_audit.json
+    sha256: 2ffd16eed37936b5917932943073ec4105fac37968462dccf63ab35929f10b62
+
+data:
+  sample_rate: 16000
+  clip_seconds: 1.0
+  maximum_segments_per_recording: 20
+  split_unit: audio_sha256
+
+model:
+  initialization: audioset
+  vendor_dir: artifacts/g7_panns/vendor/audioset_tagging_cnn/pytorch
+  checkpoint_path: artifacts/g7_panns/checkpoints/Cnn14_16k_mAP=0.438.pth
+  checkpoint_sha256: e2ee543a27919542c2ea03eabaa70b24dcd4e6c8e05621de6b67a94e4c5058e6
+  binary_checkpoint_path: artifacts_g7_panns_pt/runs/seed_42/best.pt
+  binary_checkpoint_sha256: d357f194105ec27a61838e0f4c2e7575932e2dd861e529ef970b1fb467954cdc
+  freeze_g7: true
+
+representation:
+  g7_embedding_dim: 2048
+  projection_hidden_dim: 512
+  embedding_dim: 128
+  attention_hidden_dim: 64
+  dropout: 0.15
+  normalize_segment_embedding: true
+  normalize_recording_embedding: true
+  aggregation: gated_attention
+
+train:
+  seed: 42
+  device: auto
+  extraction_batch_size: 128
+  recordings_per_class: 2
+  epochs: 40
+  patience: 7
+  learning_rate: 0.0003
+  weight_decay: 0.0001
+  label_smoothing: 0.05
+  temperature: 0.07
+  supcon_weight: 0.20
+  gradient_clip_norm: 5.0
+  log_every_steps: 10
+
+open_set:
+  seed: 42
+  split_seed: 42
+  unknown_calibration_fraction: 0.40
+  pca_components: 32
+  covariance_estimator: oas
+  distance: normalized_squared_mahalanobis
+  class_assignment: classifier_argmax
+  minimum_known_acceptance: 0.90
+  minimum_known_support: 5
+  minimum_unknown_support: 3
+  insufficient_support_policy: global_with_predicted_class_known_protection
+  representation_checkpoint_path: artifacts/g19_supcon_attention/p1_representation/best.pt
+
+reporting:
+  known_models:
+    - MAVIC2PRO
+    - MAVIC2ZOOM
+    - MAVIC3
+    - MAVICAIR2
+    - MAVICAIR2S
+    - MAVICMINI2
+    - PHANTOM4
+    - YUNEECH520
+    - YUNEECH520ERTK
+  development_unknown_models:
+    - MATRICE300
+    - S900
+  primary_unit: recording
+  report_attention_entropy: true
+  report_conservative_fallback_classes: true
+  report_per_class_recall: true
+
+gates:
+  minimum_tune_recording_macro_f1: 0.50
+  minimum_tune_recording_recall: 0.20
+  minimum_tune_known_acceptance: 0.90
+  minimum_known_correct_and_accepted_rate: 0.70
+  minimum_supported_predicted_class_known_acceptance: 0.70
+  minimum_same_unknown_recording_recall: 0.80
+  minimum_same_unknown_model_recall: 0.70
+  minimum_development_balanced_open_set_accuracy: 0.85
+  minimum_tune_known_unknown_auroc: 0.70
+
+preflight_output_dir: artifacts/g19_supcon_attention/p0_preflight
+feature_cache_dir: artifacts/g19_supcon_attention/feature_cache
+output_dir: artifacts/g19_supcon_attention/p1_representation
+open_set_output_dir: artifacts/g19_supcon_attention/p2_class_conditional_open_set

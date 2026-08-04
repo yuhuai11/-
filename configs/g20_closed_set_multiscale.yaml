@@ -1,0 +1,88 @@
+protocol: g20_p1_known_multiscale_attention_v1
+
+inputs:
+  known_train:
+    path: artifacts/g18_model_identification/p0_registry/known_train.csv
+    sha256: 0f8e756f26da9e39e7aa2092d06b75d7d9fc3e19d8d2cff790cc3f432bd0c73e
+    rows: 8080
+    recordings: 404
+    feature_path: artifacts/g19_supcon_attention/feature_cache/known_train.npy
+    feature_sha256: 8e4630c4ee9bfa2bf286ecb8da4a73c7449926c014f104a6f15b7aa1cabe8f81
+    feature_metadata_path: artifacts/g19_supcon_attention/feature_cache/known_train.json
+    feature_metadata_sha256: 5ab3e3b6c905b9c5084b7b1a0c8582f7dd037ea5a88fdfd9494481d819862b1b
+  known_tune:
+    path: artifacts/g18_model_identification/p0_registry/known_tune.csv
+    sha256: f3467b1654d23a533f58fa2f5cb93da2f3a9388473e657f90d71a7cb3c9b5d4b
+    rows: 1820
+    recordings: 91
+    feature_path: artifacts/g19_supcon_attention/feature_cache/known_tune.npy
+    feature_sha256: e07ed9a4a7426d47041cf56ab9355587a2563faf222fa8ab7f876729cfa7d6bf
+    feature_metadata_path: artifacts/g19_supcon_attention/feature_cache/known_tune.json
+    feature_metadata_sha256: d0a978ddb7147cfce079540df30fe6d8f7718363a8820009d5dff62144c0fec9
+  registry_audit:
+    path: artifacts/g18_model_identification/p0_registry/audit.json
+    sha256: dfa788540dbeef4b39fd6c6562d902921af8976bb576e8565e7f25e8629229b9
+  segment_cache_audit:
+    path: artifacts/g14_domain_generalization/segment_cache/segment_cache_audit.json
+    sha256: 2ffd16eed37936b5917932943073ec4105fac37968462dccf63ab35929f10b62
+  official_checkpoint:
+    path: artifacts/g7_panns/checkpoints/Cnn14_16k_mAP=0.438.pth
+    sha256: e2ee543a27919542c2ea03eabaa70b24dcd4e6c8e05621de6b67a94e4c5058e6
+  g7_checkpoint:
+    path: artifacts_g7_panns_pt/runs/seed_42/best.pt
+    sha256: d357f194105ec27a61838e0f4c2e7575932e2dd861e529ef970b1fb467954cdc
+
+data:
+  split_unit: audio_sha256
+  maximum_segments_per_recording: 20
+  g7_embedding_dim: 2048
+
+model:
+  projection_hidden_dim: 512
+  embedding_dim: 128
+  attention_hidden_dim: 96
+  attention_heads: 4
+  aggregation: multi_head_attentive_statistics
+  classifier: cosine
+  cosine_scale: 16.0
+  dropout: 0.15
+
+train:
+  seed: 42
+  device: auto
+  recordings_per_class: 2
+  epochs: 50
+  patience: 10
+  learning_rate: 0.0003
+  weight_decay: 0.0001
+  warmup_epochs: 3
+  label_smoothing: 0.05
+  temperature: 0.07
+  supcon_weight: 0.15
+  segment_ce_weight: 0.20
+  attention_diversity_weight: 0.05
+  attention_focus_weight: 0.02
+  maximum_normalized_attention_entropy: 0.85
+  gradient_clip_norm: 5.0
+  log_every_steps: 10
+
+reporting:
+  primary_unit: recording
+  known_models:
+    - MAVIC2PRO
+    - MAVIC2ZOOM
+    - MAVIC3
+    - MAVICAIR2
+    - MAVICAIR2S
+    - MAVICMINI2
+    - PHANTOM4
+    - YUNEECH520
+    - YUNEECH520ERTK
+
+gates:
+  minimum_tune_recording_accuracy: 0.95
+  minimum_tune_recording_macro_f1: 0.94
+  minimum_tune_recording_recall: 0.85
+
+preflight_output_dir: artifacts/g20_closed_set_multiscale/p0_preflight
+output_dir: artifacts/g20_closed_set_multiscale/p1_training

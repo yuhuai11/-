@@ -1,7 +1,7 @@
 # 历史模型归档
 
-本目录集中保存已经被替代的基线、未晋级候选模型及其历史日志。归档的目的不是删除
-实验，而是把冷数据从工程根目录移出，同时保留检查点、指标、预测和复现配置。
+本目录集中保存已经被替代的基线及其历史日志。历史基线和阶段冠军继续保留；未晋级
+候选模型产物已于2026-08-01按用户要求删除，只保留配置、源码、文档、日志和删除记录。
 
 当前正式模型不在本目录。正式G7仍位于：
 
@@ -15,7 +15,7 @@ artifacts_g7_panns_pt/runs/seed_42/best.pt
 historical_models/
 ├─ baselines/                 # 原始CRNN和ResNet10-CBAM对照模型
 ├─ superseded_champions/      # 曾经晋级、后来被G7替代的阶段冠军
-├─ failed_candidates/         # 未通过门控、未完成或未获晋级的候选
+├─ failed_candidates/         # 未晋级模型的删除审计记录，不再含模型产物
 ├─ logs/
 │  ├─ baseline_evaluations/
 │  ├─ superseded_champion/
@@ -50,13 +50,16 @@ G2全量增强CRNN曾经是阶段冠军，后来被正式G7替代，因此单独
 
 “failed”表示没有通过预注册晋级门槛，不表示相关方法或产物没有研究价值。
 
+上述六组模型产物已于2026-08-01删除，原路径不再存在。删除前摘要哈希和删除范围见
+`failed_candidates/DELETION_RECORD.md`。
+
 ## 使用规则
 
 1. 默认不从本目录恢复正式服务；
 2. 历史配置已经更新为新的归档路径；
 3. 生成产物中的旧绝对或相对路径作为历史记录保留，不修改其内容；
 4. 复算结果时优先使用`MODEL_REGISTRY.csv`中的当前路径；
-5. 不要删除检查点、指标JSON和预测NPY，除非完成独立离线备份及SHA256复核；
+5. 未晋级产物已经删除；历史基线和G2检查点仍需保留，不得误删；
 6. 当前开发应优先阅读`docs/G17双采样率互补表征与安全后融合方案.md`。
 
 ## 路径迁移
@@ -68,10 +71,9 @@ G2全量增强CRNN曾经是阶段冠军，后来被正式G7替代，因此单独
 | `artifacts_resnet10_cbam_15000/` | `archive/historical_models/baselines/artifacts_resnet10_cbam_15000/` |
 | `artifacts_resnet10_cbam_full/` | `archive/historical_models/baselines/artifacts_resnet10_cbam_full/` |
 | `artifacts_crnn_full_augmented_g2/` | `archive/historical_models/superseded_champions/artifacts_crnn_full_augmented_g2/` |
-| `artifacts_crnn_full_augmented_g3_source_balanced/` | `archive/historical_models/failed_candidates/artifacts_crnn_full_augmented_g3_source_balanced/` |
-| `artifacts_crnn_full_augmented_g4_low_snr/` | `archive/historical_models/failed_candidates/artifacts_crnn_full_augmented_g4_low_snr/` |
-| `artifacts_crnn_full_augmented_g5_mfcc64/` | `archive/historical_models/failed_candidates/artifacts_crnn_full_augmented_g5_mfcc64/` |
-| `artifacts_crnn_full_augmented_g6_temporal_attention/` | `archive/historical_models/failed_candidates/artifacts_crnn_full_augmented_g6_temporal_attention/` |
-| `artifacts_g7_panns_scratch/` | `archive/historical_models/failed_candidates/artifacts_g7_panns_scratch/` |
-| `artifacts_g9_panns_hn_bce/` | `archive/historical_models/failed_candidates/artifacts_g9_panns_hn_bce/` |
-
+| `artifacts_crnn_full_augmented_g3_source_balanced/` | 已删除（见删除记录） |
+| `artifacts_crnn_full_augmented_g4_low_snr/` | 已删除（见删除记录） |
+| `artifacts_crnn_full_augmented_g5_mfcc64/` | 已删除（见删除记录） |
+| `artifacts_crnn_full_augmented_g6_temporal_attention/` | 已删除（见删除记录） |
+| `artifacts_g7_panns_scratch/` | 已删除（见删除记录） |
+| `artifacts_g9_panns_hn_bce/` | 已删除（见删除记录） |

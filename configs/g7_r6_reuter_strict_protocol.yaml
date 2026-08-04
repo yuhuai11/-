@@ -1,0 +1,125 @@
+protocol: g7_r6_reuter_strict_multicorpus_v1
+task: binary_uav_detection
+sample_rate: 16000
+model_input_seconds: 0.5
+split_unit: original_recording_session_and_source_group
+
+base_manifests:
+  train: artifacts/g7_r5_train_val_test/train_manifest.csv
+  validation: artifacts/g7_r5_train_val_test/validation_manifest.csv
+  historical_internal_test: artifacts/g7_r5_train_val_test/internal_test_manifest.csv
+  historical_external_test: artifacts/g7_r5_train_val_test/locked_unseen_external_test/manifest.csv
+
+development_partition:
+  tau_model_validation_prefixes:
+    - tau_urban_2022:lisbon-
+  tau_threshold_calibration_prefixes:
+    - tau_urban_2022:prague-
+
+roles:
+  train:
+    model_updates_allowed: true
+    model_selection_allowed: false
+    threshold_calibration_allowed: false
+    sources: [DADS_train, Kielce_train, TAU_train, G9_train]
+  model_validation:
+    model_updates_allowed: false
+    model_selection_allowed: true
+    threshold_calibration_allowed: false
+    sources: [DADS_validation, Kielce_tune, TAU_Lisbon_tune]
+  threshold_calibration:
+    model_updates_allowed: false
+    model_selection_allowed: false
+    threshold_calibration_allowed: true
+    sources: [TAU_Prague_tune]
+  historical_internal_benchmark:
+    model_updates_allowed: false
+    model_selection_allowed: false
+    threshold_calibration_allowed: false
+    fresh_final_claim_allowed: false
+    sources: [DADS_test_consumed]
+  historical_ood_benchmark:
+    model_updates_allowed: false
+    model_selection_allowed: false
+    threshold_calibration_allowed: false
+    fresh_final_claim_allowed: false
+    sources:
+      - Kielce_dev_holdout_consumed
+      - TAU_dev_holdout_consumed
+      - DDL_AeroSonic_G13_consumed
+      - IDMT_TRAFFIC_consumed
+      - ESC50_consumed
+  final_locked_test:
+    model_updates_allowed: false
+    model_selection_allowed: false
+    threshold_calibration_allowed: false
+    read_once_after_freeze: true
+    status: empty_awaiting_new_data
+
+new_dataset_intake:
+  - source_id: idmt_berne_2022
+    intended_role: public_ood_positive_benchmark
+    priority: 1
+    status: pending_official_archive_license_and_overlap_audit
+    note: Reuter同类距离与跨会话评测；不能替代最终盲测
+  - source_id: new_ground_array_uav_sessions
+    intended_role: final_locked_positive
+    priority: 1
+    status: mandatory_missing
+    note: 新地点、新日期、新设备或新型号，完整会话封存
+  - source_id: new_deployment_background_sessions
+    intended_role: final_locked_negative
+    priority: 1
+    status: mandatory_missing
+    note: 与正样本同部署条件或目标场景，完整无无人机会话
+  - source_id: audrok_ood
+    intended_role: public_ood_positive_benchmark
+    priority: 2
+    status: deferred_until_dads_content_overlap_audit
+    note: DADS登记包含AuDroK来源，不能直接视为新数据
+  - source_id: uavirbase
+    intended_role: optional_array_stress_benchmark
+    priority: 3
+    status: reserve_domain_mismatch_and_historical_intake
+    note: 定位任务和受控阵列场景，不作为主要二分类最终测试
+  - source_id: droneaudioset
+    intended_role: optional_onboard_ego_noise_stress_benchmark
+    priority: 3
+    status: reserve_domain_mismatch
+    note: 麦克风随无人机、面向搜救听觉，不是地面远距离检测
+  - source_id: nasa_small_uas
+    intended_role: none_until_license_resolution
+    priority: 4
+    status: prohibited_for_inference_or_training
+    note: 工程现有许可审计要求先获得明确授权
+
+final_holdout_admission:
+  minimum_positive_sessions: 5
+  minimum_negative_sessions: 5
+  require_new_acquisition_source: true
+  require_license_for_research_publication: true
+  require_audio_sha256_overlap_zero: true
+  require_segment_sha256_overlap_zero: true
+  require_recording_group_overlap_zero: true
+  require_source_group_overlap_zero: true
+  require_positive_and_negative: true
+  forbid_preview_inference: true
+  forbid_model_or_threshold_selection: true
+
+frozen_evaluation:
+  seeds: [42, 43, 44]
+  recording_aggregation: mean_probability_over_native_half_second_views
+  threshold_targets_fpr: [0.01, 0.05]
+  metrics:
+    - roc_auc
+    - pr_auc
+    - standardized_pauc_fpr_le_0_05
+    - tpr_at_calibrated_fpr_0_01
+    - tpr_at_calibrated_fpr_0_05
+    - empirical_fpr_by_background_corpus
+    - recall_by_uav_type
+    - recall_by_session
+    - recording_level_recall
+    - false_alarms_per_hour
+
+output_dir: artifacts/g7_r6_strict_multicorpus

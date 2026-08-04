@@ -111,7 +111,18 @@ echo $!
 tail -f logs/g5_crnn_mfcc64_seed42.log
 ```
 
-## 7. 第一关：DADS内部保护
+## 7. 第一关：历史DADS已消费内部回归保护
+
+本方案沿用的`dads_all_seed42.csv`先在每个标签内随机把Parquet行（`AudioRef`）
+分配到Train、Validation和Test，再把每行展开成1秒片段；同一行的片段不跨split，
+但`source_path`不是实际分组键，其零交集只是事后身份审计结果。后验原始WAV字节级
+SHA256审计发现15个重复哈希组，共涉及30条Parquet记录；每组保留1条并移除15条，
+其中6组成员原本跨至少两个split，连带移除244条历史1秒manifest片段。
+
+Test又被G5及其他多轮候选门禁读取，因此它是“历史DADS同数据源已消费内部回归集”，
+不构成来源隔离的独立测试。旧`dads_dedup_v2`只去掉原始字节级精确重复，仍使用历史
+1秒`loop/tail_loop`预处理和缓存，未消除标签相关的时长/重复捷径。后续主实验重跑
+应改用`dads_native_half_second_content_component_v2`原生0.5秒内容组件隔离协议。
 
 训练完成后必须先把审计切换为verify；它会核对保护库存、候选checkpoint、metrics和checkpoint内嵌配置：
 
@@ -125,7 +136,7 @@ PYTHONPATH=src /usr/local/anaconda3/envs/dads-crnn/bin/python \
   --stage internal
 ```
 
-最低要求：Val/Test F1相对G2最多下降0.002，Val AUC最多下降0.001，Test Recall和Specificity均不低于0.99，Test AUC不低于0.995。失败时立即`keep_g2`，不运行val_ood。
+最低要求：DADS Val/历史DADS回归集F1相对G2最多下降0.002，Val AUC最多下降0.001，历史DADS回归集Recall和Specificity均不低于0.99，回归集AUC不低于0.995。失败时立即`keep_g2`，不运行val_ood。
 
 ## 8. 第二关：val_ood严格晋级
 
@@ -159,7 +170,7 @@ PYTHONPATH=src /usr/local/anaconda3/envs/dads-crnn/bin/python \
 1. holdout F1、Balanced Accuracy、Recall、Specificity、AUC全部不低于G2；
 2. F1或AUC至少提高0.02，或Recall至少提高0.03；
 3. UAV-only及六个SNR条件Recall、背景Specificity，任一不得下降超过0.03；
-4. DADS内部保护和所有SHA256仍通过。
+4. 历史DADS已消费内部回归保护和所有SHA256仍通过。
 
 只有全部满足才输出`promote_g5_mfcc64`。否则输出`keep_g2`，不训练seed 43/44，也不查看Unseen/Real-world。
 
@@ -171,18 +182,18 @@ val_ood holdout已参与多轮候选判断，应视为开发验证集。即使G5
 
 训练于2026-07-17完成，共运行72个epoch，最佳checkpoint出现在epoch 62；训练耗时约181.29分钟。训练后`verify`审计全部通过：G2与G5的输入形状、模型参数量及除特征基底外的配置保持一致，保护库存中的基线模型、数据清单、逐样本预测和关键代码SHA256均未发生变化。
 
-在固定阈值0.50下，内部结果如下：
+在固定阈值0.50下，Validation与历史DADS已消费内部回归结果如下：
 
 | Split | 指标 | G2 Log-Mel | G5 MFCC-64 | G5-G2 | 门控结果 |
 |---|---|---:|---:|---:|---|
 | Val | F1 | 0.995003 | 0.991483 | -0.003520 | 失败 |
 | Val | AUC | 0.999764 | 0.999248 | -0.000517 | 通过 |
-| Test | F1 | 0.995222 | 0.992127 | -0.003095 | 失败 |
-| Test | Recall | 0.994673 | 0.990669 | -0.004004 | 通过绝对下限 |
-| Test | Specificity | 0.993840 | 0.990680 | -0.003160 | 通过绝对下限 |
-| Test | AUC | 0.999696 | 0.999352 | -0.000344 | 通过绝对下限 |
+| 历史DADS回归集 | F1 | 0.995222 | 0.992127 | -0.003095 | 失败 |
+| 历史DADS回归集 | Recall | 0.994673 | 0.990669 | -0.004004 | 通过绝对下限 |
+| 历史DADS回归集 | Specificity | 0.993840 | 0.990680 | -0.003160 | 通过绝对下限 |
+| 历史DADS回归集 | AUC | 0.999696 | 0.999352 | -0.000344 | 通过绝对下限 |
 
-Val F1与Test F1的下降均超过预注册的最大允许值0.002，因此内部硬门控判定为`keep_g2`。按既定协议立即停止G5，不运行val_ood、不扩展seed 43/44，也不查看Unseen或Real-world结果。
+DADS Val F1与历史DADS回归集F1的下降均超过预注册的最大允许值0.002，因此内部回归硬门控判定为`keep_g2`。按既定协议立即停止G5，不运行val_ood、不扩展seed 43/44，也不查看Unseen或Real-world结果。
 
 该结果说明：全秩DCT虽然不丢失64维输入信息，但会改变局部卷积看到的邻域关系；对当前CRNN而言，MFCC-64的倒谱局部性不如Log-Mel的频率局部性匹配。它不能证明MFCC对所有结构都无效，但足以否决“用MFCC-64直接替换G2前端”这一候选。后续不得通过放宽门槛或在val_ood上补看结果来挽救G5。
 

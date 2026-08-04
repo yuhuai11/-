@@ -28,6 +28,27 @@ Acoustic UAV Detection and Open-Set Model Identification
 Python发行包的当前名称为`acoustic-uav-open-set-identification`；导入路径仍为
 `dads_crnn`，因此现有的`python -m dads_crnn.<module>`命令不受影响。
 
+## DADS历史测试口径与精确内容泄漏修复
+
+历史DADS清单生成程序以Parquet行（`AudioRef`）为分配单元，同一行展开的片段不会
+跨split。在已审计的`dads_all_seed42`及相关子清单中，`source_path`跨split交集为0，
+但这是后验结果，不是程序的显式分组规则。原始WAV审计共发现15个精确重复SHA组、涉及
+30条记录，去重时移除15条重复记录；其中6组的成员分布在至少两个split。历史Test又已
+被多轮候选门禁使用，因此旧表中的DADS Test统一解释为“历史DADS同数据源已消费内部
+回归集”，不能再称为独立测试，也不能用于证明跨会话、设备、场景或无人机型号泛化。
+
+需要区分两个名称相近但作用不同的版本：`dads_dedup_v2`只对原始WAV做精确哈希去重，
+保留历史1秒循环补齐缓存和原split；新的
+`dads_native_half_second_content_component_v2`则从原始WAV重新构造原生0.5秒
+输入，并按原始音频及最终模型输入哈希形成不可拆分组件。后者修复的是已审计到的精确
+内容交叉和类别相关循环补齐，不表示已经排除近重复、会话或设备层面的全部泄漏。过程、
+数据统计、拒绝实验和新结果统一记录在
+[DADS历史测试口径更正与G7精确内容泄漏修复重训报告](docs/DADS历史测试口径更正与G7精确内容泄漏修复重训报告.md)。
+原生0.5秒协议的seed 42重训已经完成：固定阈值0.50下，Val F1为`0.990233`，
+已消费内部开发Test F1为`0.988123`，最佳epoch为7。新检查点位于
+`artifacts/g7_leakage_fixed_v2/runs/seed_42/best.pt`。它是当前DADS协议修复后的
+内部基线；由于尚未完成外部来源复核，不能直接替换下方历史G7的部署/外部比较角色。
+
 ## 当前工程状态
 
 当前正式模型已经从原始CRNN基线发展为：
@@ -44,9 +65,16 @@ artifacts_g7_panns_pt/runs/seed_42/best.pt
 
 后续开发参考：
 
+- [当前阶段模型总结（2026-08-04）](docs/当前阶段模型总结_2026-08-04.md)
 - [G7模型结果与性能分析报告](docs/G7模型结果与性能分析报告.md)
+- [G7跨域召回、阈值迁移与低信噪比检测改进计划](docs/G7改进计划.md)
+- [G7-R2参考Reuter等（2026）的泛化增强消融实验方案](docs/G7-R2参考Reuter2026的泛化增强消融实验方案.md)
 - [G17双采样率互补表征与安全后融合方案](docs/G17双采样率互补表征与安全后融合方案.md)
 - [G18基于G7的分层开放集无人机型号识别方案](docs/G18基于G7的分层开放集无人机型号识别方案.md)
+- [G19监督对比表征、类别条件开放集与学习型录音聚合方案](docs/G19监督对比表征类别条件开放集与学习型录音聚合方案.md)
+- [G20已知型号闭集识别算法改进方案](docs/G20已知型号闭集识别算法改进方案.md)
+- [G21有限解冻迁移学习方案](docs/G21有限解冻迁移学习方案.md)
+- [G22旋翼谐波特征与PANNs后融合方案](docs/G22旋翼谐波特征与PANNs后融合方案.md)
 - [工程目录整理与历史模型归档说明](docs/工程目录整理与历史模型归档说明.md)
 
 G17-P0高频可行性审计已通过；正式结果位于
@@ -63,7 +91,26 @@ P3系列Unknown方法比较、P5多种子复现和P6一次性最终Holdout。最
 - [G18方法原理与完整流程说明](docs/G18方法原理与完整流程说明.md)
 - [G18实验结果综合汇总报告](docs/G18实验结果综合汇总报告.md)
 
-历史CRNN、ResNet10-CBAM、G2–G6、G7 Scratch和G9产物已经集中到：
+G19开发分支已经完成监督对比Embedding、门控注意力录音聚合和类别条件
+PCA-OAS Mahalanobis边界实验；Known Tune录音级Accuracy为0.9560、Macro-F1为
+0.9478、最低类别Recall为0.8571。G20多头注意力统计池化也已经完成，但门槛未通过：
+Accuracy为0.9451、Macro-F1为0.9236、最低类别Recall为0.5714。G20注意力头平均
+相似度0.9939且标准化熵0.9950，说明增加注意力复杂度没有产生有效的片段分工。
+
+G21因此保留G18冠军分类流程，不再增加注意力头；它只在G7的私有型号识别副本中以
+低学习率解冻PANNs `fc1`，并用L2-SP约束参数偏移。G21 seed 42已经完成，Known
+Tune的Accuracy为0.9780、Macro-F1为0.9797、最低类别Recall为0.8571，与G18 seed
+42完全相同。因此G21属于“非劣但未提升”的消融结果，不能替换G18冠军。训练后期指标
+波动明显，当前不扩大解冻范围。G18 P6中的X6D/Y6已经消费，G19—G21均不会将其重新
+用作最终测试。
+
+G22增加61维旋翼谐波片段特征，并以预注册固定权重0.25与G18录音级类别分数后融合。
+在seed 42/43/44上，Known Tune平均Accuracy由0.9670提高到0.9780，平均Macro-F1由
+0.9669提高到0.9805，最低类别Recall由0.8571提高到0.9286，三个预注册门槛均通过。
+G22是当前开发集冠军候选，但Known Tune已经参与评价，不能把该结果替代已消费的G18
+最终Holdout结论；正式确认需要未来新增的录音级Holdout。
+
+历史CRNN、ResNet10-CBAM和G2产物已经集中到：
 
 ```text
 archive/historical_models/
@@ -73,13 +120,39 @@ archive/historical_models/
 [历史模型归档索引](archive/historical_models/README.md)。归档模型只用于复现和对照，
 不得误认为当前正式模型。
 
+未晋级的G3、G4、G5、G6、G7-Scratch和G9模型产物已于2026-08-01按用户要求永久
+删除，释放空间约4.8GB；其配置、源码、文档、历史日志及删除前摘要哈希继续保留，详见
+[未晋级模型删除记录](archive/historical_models/failed_candidates/DELETION_RECORD.md)。
+
+## 数据版本封存与使用边界
+
+工程数据已经按实验用途集中登记到
+[数据版本封存中心](archive/data_versions/README.md)。为保持配置、脚本、审计哈希和历史
+结果可复现，数据没有物理搬迁；各原目录增加`DATA_STATUS.md`，中央登记表记录实际路径、
+状态、允许用途、禁止用途和消费历史。
+
+当前分为四类：历史内部数据、当前修正内部基线、已使用外部数据和未来独立最终测试集。
+其中G7修正后的0.5秒DADS数据可用于内部训练/验证/测试；Val/OOD、G11、G13、G14、
+IDMT Traffic以及G18-G22 Kielce数据均已参与开发或评估，不再视为全新的独立最终测试
+集。`data/future_final_holdout/`当前为空，只有完成来源登记、跨库去重、划分审计以及模型/
+阈值冻结后才能接收未来最终测试数据。
+
+封存校验命令：
+
+```bash
+bash scripts/verify_data_archive.sh
+```
+
 ## 历史CRNN论文复现设置（非当前正式G7）
 
 以下设置和命令用于复现工程起点的CRNN论文实验，不用于训练当前正式G7或G18。
 
 - 数据集：DADS，16 kHz、16-bit、mono WAV。
 - 抽样：Drone 5000 个原始音频文件，No-Drone 5000 个原始音频文件，保持原始文件级类别均衡。
-- 划分：先按原始文件做 70% train，15% validation，15% test；再在各 split 内分段，避免同一原始文件的片段跨 split。
+- 划分：历史复现流程先把Parquet行（`AudioRef`）按70% train、15% validation、
+  15% test分配，再在各split内分段；同一行的片段不跨split。`source_path`交集为0
+  只是该清单的后验检查结果，程序没有把它作为显式分组键，也没有阻止内容相同但标识
+  不同的录音跨split，因此该流程只能作为历史内部回归协议。
 - 预处理：损坏文件和完全静音文件删除；超过 1 秒的音频切成非重叠 1 秒片段；短于 1 秒的音频循环补齐；峰值归一化；转 Log-Mel 频谱。
 - 模型：CRNN，CNN 提取时频特征，GRU 建模时间依赖，最后输出 drone 概率。
 - 训练：Adam，binary cross entropy，batch size 32，learning rate 0.001，最多 150 epoch，early stopping patience 10。

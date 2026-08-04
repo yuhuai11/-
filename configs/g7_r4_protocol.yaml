@@ -1,0 +1,67 @@
+protocol: g7_r4_cross_dataset_binary_detection_v1
+
+scope:
+  task: binary_uav_detection_on_unseen_uav_domains
+  unknown_model_rejection: false
+  model_identification: false
+  native_input_seconds: 0.5
+  recording_aggregation: mean_probability
+
+baseline:
+  name: g7_r2_pt_mic_bg_freq_seed42
+  checkpoint: artifacts/g7_r2_generalization/ablations/pt_mic_bg_freq/runs/seed_42/best.pt
+  checkpoint_sha256: a960b60fff5b810d023fce64498006229c03bab3fde21ef52df7168c8942c447
+
+data_roles:
+  train:
+    - DADS train replay
+    - Kielce train UAV positives
+    - TAU train urban backgrounds
+    - G9 mechanical hard negatives
+  development:
+    - DADS validation regression
+    - Kielce tune UAV positives
+    - TAU tune backgrounds
+  locked_confirmation:
+    - Kielce dev_holdout UAV models: [Phantom4, S900, X6D, Y6]
+    - TAU dev_holdout backgrounds
+  forbidden_training:
+    - Kielce dev_holdout
+    - TAU dev_holdout
+    - G13 consumed external confirmation audio
+    - NASA archive with unresolved training license
+
+stages:
+  r4a:
+    config: configs/g7_r4a_source_balanced_fc1.yaml
+    change: source-balanced replay plus fc1-and-head limited adaptation
+  r4b:
+    admission: r4a_failed_only_fixed_threshold_minus15db_gate_but_improved_ranking_and_low_fpr_metrics
+    change: single_variable_stratified_low_snr_positive_background_mix
+    low_snr_fraction_of_all_positive_views: 0.099
+  r4c:
+    admission: one_final_preregistered_midpoint_after_r4b_fixed_lowsnr_but_exceeded_dads_drop
+    change: reduce_low_snr_positive_view_exposure_from_0.099_to_0.0495
+    search_policy: single_point_only_no_further_weight_search_on_same_development_set
+
+development_gates:
+  maximum_dads_validation_f1_drop: 0.003
+  maximum_tau_tune_fpr_increase: 0.005
+  minimum_kielce_tune_recall_gain: 0.005
+  require_low_snr_recall_noninferiority: true
+
+confirmation_metrics:
+  - ROC-AUC
+  - PR-AUC
+  - standardized_pAUC_FPR_le_0.05
+  - TPR_at_calibrated_FPR_0.01
+  - TPR_at_calibrated_FPR_0.05
+  - source_macro_TPR
+  - worst_source_TPR
+  - recording_level_recall
+
+claim_boundary:
+  seeds: [42, 43, 44]
+  candidate_selection_must_not_read_locked_confirmation: true
+  one_seed_result_is_feasibility_only: true
+  locked_confirmation_is_read_once_after_candidate_freeze: true

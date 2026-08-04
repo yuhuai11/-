@@ -1,0 +1,56 @@
+protocol: g22_p0_known_harmonic_fusion_probe_v1
+
+inputs:
+  known_train:
+    path: artifacts/g18_model_identification/p0_registry/known_train.csv
+    sha256: 0f8e756f26da9e39e7aa2092d06b75d7d9fc3e19d8d2cff790cc3f432bd0c73e
+    rows: 8080
+    recordings: 404
+    g7_feature_path: artifacts/g19_supcon_attention/feature_cache/known_train.npy
+    g7_feature_sha256: 8e4630c4ee9bfa2bf286ecb8da4a73c7449926c014f104a6f15b7aa1cabe8f81
+  known_tune:
+    path: artifacts/g18_model_identification/p0_registry/known_tune.csv
+    sha256: f3467b1654d23a533f58fa2f5cb93da2f3a9388473e657f90d71a7cb3c9b5d4b
+    rows: 1820
+    recordings: 91
+    g7_feature_path: artifacts/g19_supcon_attention/feature_cache/known_tune.npy
+    g7_feature_sha256: e07ed9a4a7426d47041cf56ab9355587a2563faf222fa8ab7f876729cfa7d6bf
+  registry_audit:
+    path: artifacts/g18_model_identification/p0_registry/audit.json
+    sha256: dfa788540dbeef4b39fd6c6562d902921af8976bb576e8565e7f25e8629229b9
+  g18_checkpoint:
+    path: artifacts/g18_model_identification/p2_seed42/seed_42/best.pt
+    sha256: 6e207318785ca1f970f888d74b10a0823a96088fe1b4dc87f6b71f39f7a67c20
+
+data:
+  sample_rate: 16000
+  clip_seconds: 1.0
+  split_unit: audio_sha256
+
+features:
+  segment_dimension: 61
+  recording_aggregation: mean_std
+  n_fft: 16384
+  logarithmic_bands: 32
+  harmonics: 12
+  fundamental_frequency_hz: [40, 500]
+
+classifier:
+  type: standard_scaler_logistic_regression
+  c: 0.1
+  class_weight: balanced
+  maximum_iterations: 5000
+  seed: 42
+
+fusion:
+  score_normalization: per_recording_center_std
+  primary_harmonic_weight: 0.25
+  diagnostic_harmonic_weights: [0.0, 0.1, 0.25, 0.5, 0.75, 1.0]
+
+baseline:
+  name: g18_seed42_frozen_g7
+  tune_recording_accuracy: 0.978021978021978
+  tune_recording_macro_f1: 0.9796749298665007
+  tune_recording_minimum_recall: 0.8571428571428571
+
+output_dir: artifacts/g22_harmonic_fusion_probe

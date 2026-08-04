@@ -120,8 +120,33 @@ class DADSDataset:
             cache_index = row.get("cache_index", "")
             if not pd.isna(cache_index) and str(cache_index).strip() != "":
                 cache = self._read_memmap(cache_path)
-                return np.asarray(cache[int(cache_index)], dtype=np.float32)
-            return np.load(cache_path).astype(np.float32, copy=False)
+                audio = np.asarray(cache[int(cache_index)], dtype=np.float32)
+            else:
+                audio = np.load(cache_path).astype(np.float32, copy=False)
+
+            # Some external-domain caches contain audited 1 s windows while
+            # G7-R2/R4 consumes native 0.5 s inputs.  Explicit cache offsets
+            # let a manifest expose both non-overlapping halves without
+            # rewriting several gigabytes of immutable cache data.  Legacy
+            # manifests omit the columns and retain their original behavior.
+            cache_start = row.get("cache_start_sample", "")
+            cache_end = row.get("cache_end_sample", "")
+            has_start = not pd.isna(cache_start) and str(cache_start).strip() != ""
+            has_end = not pd.isna(cache_end) and str(cache_end).strip() != ""
+            if has_start != has_end:
+                raise ValueError(
+                    "cache_start_sample and cache_end_sample must be provided together"
+                )
+            if has_start:
+                start = int(cache_start)
+                end = int(cache_end)
+                if start < 0 or end <= start or end > audio.size:
+                    raise ValueError(
+                        f"Invalid cache sample range [{start}, {end}) for {cache_path} "
+                        f"with {audio.size} samples"
+                    )
+                audio = audio[start:end]
+            return audio
 
         parquet_file = str(row["parquet_file"])
         row_group = int(row["row_group"])

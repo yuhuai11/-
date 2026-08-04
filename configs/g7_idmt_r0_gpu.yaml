@@ -1,0 +1,68 @@
+algorithm: g7_idmt_r0_frozen_background_v1
+
+model:
+  checkpoint:
+    path: artifacts_g7_panns_pt/runs/seed_42/best.pt
+    sha256: d357f194105ec27a61838e0f4c2e7575932e2dd861e529ef970b1fb467954cdc
+  seed: 42
+
+inputs:
+  stage_b_audit:
+    path: artifacts/g7_improvement/stage_b/audit.json
+    sha256: 3c1525bedb11b416273e69e18c20af322918fd190dfb6d8ab771a9da6a7aa24d
+  calibration_manifest:
+    path: artifacts/g7_improvement/stage_b/calibration_segments_dedup.csv
+    sha256: 891a0406fa71ee3444d95defb966200085f20fd4e60b99b80092fd688cc35fb7
+  development_manifest:
+    path: artifacts/g7_improvement/stage_b/development_segments_dedup.csv
+    sha256: eb514a95c914b0b976e701970633538b52ad43701b188ccb6c029bc85c51adf6
+  calibration_source:
+    path: artifacts/val_ood/calibration/g7_panns_pt/seed_42/calibration.json
+    sha256: ecf5b5e10f56fbd43c1e611138747be3c58207f11b2f2f171fb802e0d0c00e94
+  low_fpr_source:
+    path: artifacts/g7_low_fpr_candidate/g7_panns_pt_seed42/metrics.json
+    sha256: edad8700fb71cbefd572d111c21c6cd74b78a6628049f2c2c19d47d1f6577bf0
+  g13_frozen_protocol:
+    path: artifacts/g13_external_confirmation/evaluation/frozen_protocol.json
+    sha256: ea89672d53d5843ac919e70231fa89772ae79171c2645a4573b99cd8ec0abc52
+
+contract:
+  evaluation_role: development_test
+  expected_segments: 29346
+  expected_recordings: 14673
+  expected_sessions: 13
+  expected_events: 7341
+  allowed_locations: [Langewiesener-Strasse, Schleusinger-Allee]
+  forbidden_tokens: [Hohenwarte, final_holdout]
+  sample_rate: 16000
+  clip_seconds: 1.0
+  windows_per_recording: 2
+  temperature: 2.258312527893372
+  operating_points:
+    strict_target_fpr_1:
+      threshold: 0.7236399840238329
+      source_target_fpr: 0.01
+    sensitivity_target_fpr_5:
+      threshold: 0.5085329108689571
+      source_target_fpr: 0.05
+    historical_probability_0_5:
+      threshold: 0.5
+      source_target_fpr: null
+  primary_operating_point: strict_target_fpr_1
+  calibration_audio_used_in_r0: false
+  final_holdout_audio_used: false
+
+evaluation:
+  device: cuda
+  batch_size:
+    cuda: 128
+    cpu: 8
+  num_workers: 0
+  mixed_precision: true
+  bootstrap_samples: 2000
+  bootstrap_seed: 20260730
+
+outputs:
+  frozen_protocol: artifacts/g7_improvement/stage_c_r0_gpu/frozen_protocol.json
+  preflight: artifacts/g7_improvement/stage_c_r0_gpu/preflight.json
+  evaluation_dir: artifacts/g7_improvement/stage_c_r0_gpu/evaluation

@@ -4,16 +4,38 @@ import io
 import wave
 
 import numpy as np
+from scipy.io import wavfile
 from scipy.signal import resample_poly
+
+
+def _decode_ieee_float_wav(wav_bytes: bytes) -> tuple[np.ndarray, int]:
+    """Decode IEEE-float WAV files that Python's ``wave`` module rejects."""
+    sample_rate, values = wavfile.read(io.BytesIO(wav_bytes))
+    audio = np.asarray(values)
+    if audio.dtype.kind != "f":
+        raise ValueError(
+            "WAV was rejected by the PCM decoder and is not IEEE floating-point audio"
+        )
+    if not np.isfinite(audio).all():
+        raise ValueError("IEEE-float WAV contains NaN or infinite samples")
+    if audio.ndim == 2:
+        audio = audio.astype(np.float32).mean(axis=1)
+    elif audio.ndim != 1:
+        raise ValueError(f"Unsupported IEEE-float WAV shape: {audio.shape}")
+    audio = np.clip(audio.astype(np.float32, copy=False), -1.0, 1.0)
+    return audio, int(sample_rate)
 
 
 def decode_wav_bytes(wav_bytes: bytes) -> tuple[np.ndarray, int]:
     """Decode PCM WAV bytes to mono float32 in [-1, 1]."""
-    with wave.open(io.BytesIO(wav_bytes), "rb") as wav:
-        channels = wav.getnchannels()
-        sample_rate = wav.getframerate()
-        sample_width = wav.getsampwidth()
-        frames = wav.readframes(wav.getnframes())
+    try:
+        with wave.open(io.BytesIO(wav_bytes), "rb") as wav:
+            channels = wav.getnchannels()
+            sample_rate = wav.getframerate()
+            sample_width = wav.getsampwidth()
+            frames = wav.readframes(wav.getnframes())
+    except wave.Error:
+        return _decode_ieee_float_wav(wav_bytes)
 
     if sample_width == 1:
         audio = (np.frombuffer(frames, dtype=np.uint8).astype(np.float32) - 128.0) / 128.0

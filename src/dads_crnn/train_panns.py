@@ -124,6 +124,38 @@ def _is_g9(config: dict) -> bool:
     return bool(config.get("data", {}).get("g9_audit_path"))
 
 
+def _requires_training_input_identity(config: dict) -> bool:
+    """Return whether legacy checkpoints without a bound manifest are forbidden."""
+    data = config.get("data", {})
+    return bool(_is_g9(config) or data.get("require_leakage_fixed_guard", False))
+
+
+def _amp_init_scale(config: dict) -> float:
+    """Read one finite, positive AMP scale for both preflight and training."""
+    try:
+        scale = float(config["train"].get("amp_init_scale", 65536.0))
+    except (KeyError, TypeError, ValueError) as error:
+        raise ValueError("train.amp_init_scale must be a finite positive number") from error
+    if not np.isfinite(scale) or scale <= 0.0:
+        raise ValueError("train.amp_init_scale must be a finite positive number")
+    return scale
+
+
+def _amp_optimizer_step(
+    scaler: torch.amp.GradScaler,
+    optimizer: torch.optim.Optimizer,
+    *,
+    enabled: bool,
+) -> tuple[bool, float, float]:
+    """Take one scaler-managed step and report a non-finite-gradient skip."""
+    scale_before = float(scaler.get_scale())
+    scaler.step(optimizer)
+    scaler.update()
+    scale_after = float(scaler.get_scale())
+    skipped_for_nonfinite_gradients = bool(enabled and scale_after < scale_before)
+    return skipped_for_nonfinite_gradients, scale_before, scale_after
+
+
 def _verify_checkpoint_inputs(
     saved: dict,
     expected: dict,
@@ -133,13 +165,15 @@ def _verify_checkpoint_inputs(
 ) -> None:
     observed = saved.get("training_inputs")
     if observed is None:
-        # Checkpoints written before G9 did not record the manifest identity.
-        # Preserve their resume behavior, but never allow a G9 run to use one.
+        # Preserve historical behavior only for protocols that do not require a
+        # cryptographically bound manifest/audit identity.
         if require_identity:
-            raise ValueError(f"{artifact} lacks the required G9 training input identity")
+            raise ValueError(f"{artifact} lacks the required training input identity")
         return
     if observed != expected:
-        raise ValueError(f"{artifact} training manifest or G9 audit does not match this run")
+        raise ValueError(
+            f"{artifact} training manifest or input audit does not match this run"
+        )
 
 
 def build_model(config: dict) -> PannsCnn14Binary:
@@ -156,6 +190,7 @@ def build_model(config: dict) -> PannsCnn14Binary:
         binary_checkpoint_path=model.get("binary_checkpoint_path"),
         binary_checkpoint_sha256=model.get("binary_checkpoint_sha256"),
         trainable_scope=str(model.get("trainable_scope", "full")),
+        frequency_masking=model.get("frequency_masking"),
     )
 
 
@@ -223,6 +258,7 @@ def _g9_loader_protocol(config: dict, train_loader) -> tuple[set[int], bool]:
 
 def preflight(config: dict, manifest_path: Path, seed: int) -> dict:
     """Exercise the real loader, augmentation and AMP optimizer path without writing a run."""
+    configured_amp_init_scale = _amp_init_scale(config)
     training_inputs = (
         _training_input_identity(config, manifest_path) if _is_g9(config) else None
     )
@@ -246,7 +282,11 @@ def preflight(config: dict, manifest_path: Path, seed: int) -> dict:
     optimizer = torch.optim.Adam(
         trainable_parameters, lr=float(config["train"]["learning_rate"])
     )
-    scaler = torch.amp.GradScaler(device.type, enabled=amp)
+    scaler = torch.amp.GradScaler(
+        device.type,
+        enabled=amp,
+        init_scale=configured_amp_init_scale,
+    )
     criterion = _training_criterion(config, train_loader, device)
     if is_g9 and not isinstance(criterion, nn.BCEWithLogitsLoss):
         raise TypeError("G9 first stage requires BCEWithLogitsLoss")
@@ -282,12 +322,22 @@ def preflight(config: dict, manifest_path: Path, seed: int) -> dict:
         train_loss = criterion(logits.float(), target)
     scaler.scale(train_loss).backward()
     scaler.unscale_(optimizer)
-    gradients_finite = all(
-        parameter.grad is None or bool(torch.isfinite(parameter.grad).all().item())
-        for parameter in model.parameters()
-    )
-    scaler.step(optimizer)
-    scaler.update()
+    nonfinite_gradient_parameters = []
+    nonfinite_gradient_values = {}
+    for name, parameter in model.named_parameters():
+        if parameter.grad is None:
+            continue
+        finite = torch.isfinite(parameter.grad)
+        if bool(finite.all().item()):
+            continue
+        nonfinite_gradient_parameters.append(name)
+        nonfinite_gradient_values[name] = int((~finite).sum().item())
+    gradients_finite = not nonfinite_gradient_parameters
+    (
+        optimizer_step_skipped,
+        initial_grad_scale,
+        updated_grad_scale,
+    ) = _amp_optimizer_step(scaler, optimizer, enabled=amp)
 
     model.eval()
     with torch.no_grad():
@@ -306,6 +356,7 @@ def preflight(config: dict, manifest_path: Path, seed: int) -> dict:
             and torch.isfinite(logits).all().item()
             and torch.isfinite(val_logits).all().item()
             and gradients_finite
+            and not optimizer_step_skipped
         ),
         "initialization": config["model"]["initialization"],
         "frontend_precision": config["model"].get("frontend_precision", "float32"),
@@ -316,6 +367,11 @@ def preflight(config: dict, manifest_path: Path, seed: int) -> dict:
         "train_logits_finite": bool(torch.isfinite(logits).all().item()),
         "val_logits_finite": bool(torch.isfinite(val_logits).all().item()),
         "train_gradients_finite": gradients_finite,
+        "initial_grad_scale": initial_grad_scale,
+        "updated_grad_scale": updated_grad_scale,
+        "optimizer_step_skipped_for_nonfinite_gradients": optimizer_step_skipped,
+        "nonfinite_gradient_parameters": nonfinite_gradient_parameters,
+        "nonfinite_gradient_values": nonfinite_gradient_values,
         "peak_allocated_bytes": int(torch.cuda.max_memory_allocated(device)),
         "peak_reserved_bytes": int(torch.cuda.max_memory_reserved(device)),
         "parameter_count": sum(parameter.numel() for parameter in model.parameters()),
@@ -403,6 +459,7 @@ def train_one_seed(
     resume: bool = False,
     training_inputs: dict | None = None,
 ) -> dict:
+    configured_amp_init_scale = _amp_init_scale(config)
     if training_inputs is None and _is_g9(config):
         training_inputs = _training_input_identity(config, manifest_path)
     set_seed(seed)
@@ -428,7 +485,11 @@ def train_one_seed(
     scheduler = torch.optim.lr_scheduler.ExponentialLR(
         optimizer, gamma=float(config["train"].get("lr_decay", 1.0))
     )
-    scaler = torch.amp.GradScaler(device.type, enabled=amp)
+    scaler = torch.amp.GradScaler(
+        device.type,
+        enabled=amp,
+        init_scale=configured_amp_init_scale,
+    )
     criterion = _training_criterion(config, train_loader, device)
     if _is_g9(config) and not isinstance(criterion, nn.BCEWithLogitsLoss):
         raise TypeError("G9 first stage requires BCEWithLogitsLoss")
@@ -445,6 +506,8 @@ def train_one_seed(
     bad_epochs = 0
     start_epoch = 1
     elapsed_offset = 0.0
+    amp_nonfinite_gradient_skip_steps = 0
+    amp_skip_count_complete = True
     history_rows: list[dict] = []
     history_path = run_dir / "history.csv"
     last_path = run_dir / "last.pt"
@@ -458,7 +521,7 @@ def train_one_seed(
         _verify_checkpoint_inputs(
             saved,
             training_inputs,
-            require_identity=_is_g9(config),
+            require_identity=_requires_training_input_identity(config),
             artifact="Resume checkpoint",
         )
         model.load_state_dict(saved["model"], strict=True)
@@ -470,6 +533,18 @@ def train_one_seed(
         bad_epochs = int(saved["bad_epochs"])
         start_epoch = int(saved["next_epoch"])
         elapsed_offset = float(saved["elapsed_seconds"])
+        if "amp_nonfinite_gradient_skip_steps" in saved:
+            amp_nonfinite_gradient_skip_steps = int(
+                saved["amp_nonfinite_gradient_skip_steps"]
+            )
+            amp_skip_count_complete = bool(
+                saved.get("amp_skip_count_complete", True)
+            )
+        else:
+            # A pre-counter checkpoint can still be resumed when its exact
+            # training input identity matches, but its earlier AMP skips are
+            # unknowable and must not be reported as a complete zero.
+            amp_skip_count_complete = False
         history_rows = list(saved["history"])
         _restore_rng_state(saved["rng_state"], train_loader)
         _write_history(history_path, history_rows)
@@ -509,8 +584,11 @@ def train_one_seed(
                 logits = model(waveform)
                 loss = criterion(logits.float(), target)
             scaler.scale(loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
+            skipped_for_nonfinite_gradients, _, _ = _amp_optimizer_step(
+                scaler, optimizer, enabled=amp
+            )
+            if skipped_for_nonfinite_gradients:
+                amp_nonfinite_gradient_skip_steps += 1
             train_loss += float(loss.item()) * waveform.size(0)
             train_examples += int(waveform.size(0))
             if interactive_progress:
@@ -553,6 +631,11 @@ def train_one_seed(
                     "model": model.state_dict(),
                     "config": config,
                     "training_inputs": training_inputs,
+                    "amp_grad_scale": float(scaler.get_scale()),
+                    "amp_nonfinite_gradient_skip_steps": (
+                        amp_nonfinite_gradient_skip_steps
+                    ),
+                    "amp_skip_count_complete": amp_skip_count_complete,
                 },
                 run_dir / "best.pt",
             )
@@ -570,6 +653,10 @@ def train_one_seed(
                 "optimizer": optimizer.state_dict(),
                 "scheduler": scheduler.state_dict(),
                 "scaler": scaler.state_dict(),
+                "amp_nonfinite_gradient_skip_steps": (
+                    amp_nonfinite_gradient_skip_steps
+                ),
+                "amp_skip_count_complete": amp_skip_count_complete,
                 "best_f1": best_f1,
                 "best_epoch": best_epoch,
                 "bad_epochs": bad_epochs,
@@ -588,7 +675,7 @@ def train_one_seed(
     _verify_checkpoint_inputs(
         checkpoint,
         training_inputs,
-        require_identity=_is_g9(config),
+        require_identity=_requires_training_input_identity(config),
         artifact="Best checkpoint",
     )
     model.load_state_dict(checkpoint["model"], strict=True)
@@ -614,6 +701,10 @@ def train_one_seed(
         "feature_type": "panns_log_mel",
         "parameter_count": parameter_count,
         "mixed_precision": amp,
+        "amp_init_scale": configured_amp_init_scale,
+        "amp_final_scale": float(scaler.get_scale()),
+        "amp_nonfinite_gradient_skip_steps": amp_nonfinite_gradient_skip_steps,
+        "amp_skip_count_complete": amp_skip_count_complete,
         "best_epoch": best_epoch,
         "best_val_f1": best_f1,
         "val_loss": val_loss,

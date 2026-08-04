@@ -1,0 +1,74 @@
+protocol: g7_r6_dronenoise_data_expansion_control_v1
+
+control_reference:
+  config_path: configs/g7_r2_pt_mic_bg_freq.yaml
+  config_sha256: 15f49d0f2c0f5bd6377e83442a79005666435295663b001796b74516be098ba3
+  seed42_checkpoint: artifacts/g7_r2_generalization/ablations/pt_mic_bg_freq/runs/seed_42/best.pt
+  seed42_checkpoint_sha256: a960b60fff5b810d023fce64498006229c03bab3fde21ef52df7168c8942c447
+  changed_variable: training_and_model_validation_data_only
+
+data:
+  manifest_dir: artifacts/g7_r6_reusable_multicorpus
+  sample_rate: 16000
+  clip_seconds: 0.5
+  split_names:
+    train: train
+    val: model_validation
+    test: reusable_internal_test
+  input_audits:
+    - artifacts/g7_r6_reusable_multicorpus/protocol_audit.json
+    - artifacts/g7_r6_dronenoise_halfsec_cache/cache_audit.json
+
+features:
+  type: waveform
+
+model:
+  type: panns_cnn14_16k
+  initialization: audioset
+  vendor_dir: artifacts/g7_panns/vendor/audioset_tagging_cnn/pytorch
+  checkpoint_path: artifacts/g7_panns/checkpoints/Cnn14_16k_mAP=0.438.pth
+  checkpoint_sha256: e2ee543a27919542c2ea03eabaa70b24dcd4e6c8e05621de6b67a94e4c5058e6
+  spec_augment: false
+  frontend_precision: float32
+  frequency_masking:
+    enabled: true
+    probability: 0.50
+    maximum_masks: 3
+    maximum_width_fraction: 0.15
+    fill: recording_mean
+
+train:
+  seeds: [42]
+  batch_size: 128
+  epochs: 15
+  learning_rate: 0.0001
+  lr_decay: 0.75
+  patience: 4
+  num_workers: 0
+  device: cuda
+  mixed_precision: true
+  amp_init_scale: 8192.0
+  pos_weight: auto
+  augmentation:
+    positive_mix_probability: 0.33
+    mix_snr_uniform_db: [10.0, 20.0]
+    frequency_response_probability: 0.33
+    frequency_response_mode: structured_microphone_v1
+    microphone_highpass_hz: [60.0, 120.0]
+    microphone_lowpass_hz: [6000.0, 8000.0]
+    microphone_peaking_sections: [2, 3]
+    microphone_peaking_center_hz: [120.0, 6000.0]
+    microphone_peaking_q: [0.5, 2.0]
+    microphone_peaking_gain_db: [-4.0, 4.0]
+    reverb_probability: 0.0
+    reverb_delay_ms: [12.0, 80.0]
+    reverb_gain: [0.05, 0.25]
+    colored_noise_probability: 0.0
+    colored_noise_snr_db: [10.0, 30.0]
+    time_shift_probability: 0.0
+    max_time_shift_ms: 0.0
+
+eval:
+  thresholds: [0.40, 0.50, 0.65]
+
+output_dir: artifacts/g7_r6_dronenoise_control/runs
