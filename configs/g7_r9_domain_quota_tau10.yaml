@@ -1,0 +1,79 @@
+protocol: g7_r9_domain_quota_tau_dose_10_seed42_v1
+
+data:
+  manifest_dir: artifacts/g7_r8_urban_negatives/data
+  sample_rate: 16000
+  clip_seconds: 0.5
+  input_audits:
+    - artifacts/g7_leakage_fixed_v2/data/audit.json
+    - artifacts/g7_r8_urban_negatives/data/audit.json
+
+features:
+  type: waveform
+
+model:
+  type: panns_cnn14_16k
+  initialization: audioset
+  vendor_dir: artifacts/g7_panns/vendor/audioset_tagging_cnn/pytorch
+  checkpoint_path: artifacts/g7_panns/checkpoints/Cnn14_16k_mAP=0.438.pth
+  checkpoint_sha256: e2ee543a27919542c2ea03eabaa70b24dcd4e6c8e05621de6b67a94e4c5058e6
+  spec_augment: false
+  frontend_precision: float32
+  frequency_masking:
+    enabled: true
+    probability: 0.50
+    maximum_masks: 3
+    maximum_width_fraction: 0.15
+    fill: recording_mean
+  frequency_mixstyle:
+    enabled: true
+    insertion: after_logmel_augmentation_before_conv_block1
+    statistics_axis: frequency
+    probability: 0.50
+    beta_alpha: 0.60
+    epsilon: 0.000001
+
+train:
+  seeds: [42]
+  batch_size: 128
+  epochs: 15
+  learning_rate: 0.0001
+  lr_decay: 0.75
+  patience: 4
+  num_workers: 0
+  device: cuda
+  mixed_precision: true
+  amp_init_scale: 8192.0
+  pos_weight: 1.1416534670890532
+  sampling:
+    type: class_domain_quota_batch
+    domain_column: domain_bucket
+    samples_per_epoch: 292096
+    positive_per_batch: 60
+    positive_domain: positive:dads
+    negative_domain_fractions:
+      negative:dads: 0.90
+      negative:tau_urban_train: 0.10
+  augmentation:
+    positive_mix_probability: 0.33
+    mix_snr_uniform_db: [10.0, 20.0]
+    frequency_response_probability: 0.33
+    frequency_response_mode: structured_microphone_v1
+    microphone_highpass_hz: [60.0, 120.0]
+    microphone_lowpass_hz: [6000.0, 8000.0]
+    microphone_peaking_sections: [2, 3]
+    microphone_peaking_center_hz: [120.0, 6000.0]
+    microphone_peaking_q: [0.5, 2.0]
+    microphone_peaking_gain_db: [-4.0, 4.0]
+    reverb_probability: 0.0
+    reverb_delay_ms: [12.0, 80.0]
+    reverb_gain: [0.05, 0.25]
+    colored_noise_probability: 0.0
+    colored_noise_snr_db: [10.0, 30.0]
+    time_shift_probability: 0.0
+    max_time_shift_ms: 0.0
+
+eval:
+  thresholds: [0.40, 0.50, 0.65]
+
+output_dir: artifacts/g7_r9_domain_quota/tau_10/runs

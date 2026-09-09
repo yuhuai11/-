@@ -95,10 +95,29 @@ benchmark_policy:
   forbid_training_on_benchmark_in_same_experiment_series: true
   independent_final_claim_allowed: false
   identical_checkpoint_repeated_inference_has_no_statistical_value: true
+  benchmark_status: consumed_reusable_development_benchmark
+  corpus_label_shortcut_is_promotion_evidence: false
+  require_model_input_identity_audit: true
+  require_dataset_origin_label_purity_audit: true
+  require_source_group_metrics: true
+  prohibit_independent_external_claim: true
+
+promotion_gates:
+  operating_point: fixed_0_5
+  required_non_regression:
+    - kielce_tau_source_group_macro_balanced_accuracy
+    - kielce_tau_source_group_macro_false_positive_rate
+    - g13_source_group_macro_balanced_accuracy
+    - g13_recording_roc_auc
+    - idmt_source_group_macro_false_positive_rate
+    - esc50_source_group_macro_false_positive_rate
+  allow_kielce_improvement_to_override_other_domain_regression: false
+  independent_final_confirmation_required_for_deployment_claim: true
 
 reporting:
   primary_unit: recording
-  secondary_unit: native_half_second_segment
+  clustered_primary_unit: source_group_macro_over_recording_metrics
+  secondary_unit: native_half_second_segment_diagnostic_only
   uncertainty:
     - three_seed_mean_and_standard_deviation
     - paired_recording_bootstrap_95ci
@@ -116,5 +135,10 @@ reporting:
     - recall_by_uav_type
     - recall_by_session
     - false_alarms_per_hour
+  mandatory_limitations:
+    - kielce_positive_and_tau_negative_are_corpus_label_confounded
+    - g13_source_groups_are_label_pure
+    - idmt_and_esc50_are_negative_only_stress_sets
+    - all_current_external_benchmarks_are_consumed_and_reusable
 
 output_dir: artifacts/g7_r6_reusable_multicorpus

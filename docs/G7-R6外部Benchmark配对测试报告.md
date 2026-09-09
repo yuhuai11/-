@@ -1,5 +1,9 @@
 # G7-R6 外部 Benchmark 配对测试报告
 
+> 可信度更正：本报告中的数据均已被工程消费，应统一称为“可重复开发Benchmark”，
+> 不能称为全新独立外部最终测试。Kielce正类与TAU负类还存在数据来源和标签完全绑定的
+> 语料捷径。详细审计见`G7数据泄露与结果虚高修整报告.md`。
+
 ## 1. 结论
 
 本次外部测试已经完成，但 **G7-R6 seed42 暂不晋级为新的通用 G7**。
@@ -7,6 +11,9 @@
 G7-R6 在 Kielce/TAU Holdout 上明显优于 G7-R2：固定阈值 0.5 时，切片级 Accuracy 从 0.9356 提升到 0.9910，F1 从 0.9504 提升到 0.9933，无人机 Recall 从 0.9102 提升到 0.9873，FPR 从 0.0108 降到 0.0011。
 
 但是这种提升没有稳定迁移到其他外部域。G13 固定阈值下的 Accuracy 从 0.8921 降到 0.8674，F1 从 0.5770 降到 0.5066；IDMT Traffic 的 FPR 从 0.1799 上升到 0.2028。因此，增加 DroneNoise 训练数据改善了部分无人机域，却扩大了对未见噪声域的误报，尚不能证明整体跨数据集泛化能力提升。
+
+修整后的来源组/录音级自动门禁失败项为G13来源组宏Balanced Accuracy、G13录音级
+ROC-AUC和IDMT来源组宏FPR非退化。该结论不是根据Kielce单项提升主观判断。
 
 ## 2. 对比对象
 
@@ -118,3 +125,5 @@ TAU Prague 上得到的校准阈值发生明显变化：
 - 机器可读完整指标：`artifacts/g7_r6_dronenoise_control/external_suite/metrics.json`
 - 每个模型、每个数据集的逐切片概率：`artifacts/g7_r6_dronenoise_control/external_suite/*_probabilities.npy`
 - 运行日志：`logs/g7_r6_external_suite.log`
+- 可信度审计：`artifacts/g7_r6_dronenoise_control/external_suite/validity_audit.json`
+- 修整说明：`docs/G7数据泄露与结果虚高修整报告.md`

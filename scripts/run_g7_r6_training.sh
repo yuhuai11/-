@@ -38,13 +38,16 @@ case "${1:-status}" in
   evaluate-external)
     "$PYTHON_BIN" -u -m dads_crnn.evaluate_g7_r6_external_suite
     ;;
+  audit-validity)
+    "$PYTHON_BIN" -u -m dads_crnn.audit_g7_benchmark_validity
+    ;;
   status)
     pgrep -af "dads_crnn.train_panns.*g7_r6_dronenoise_control.yaml" || true
     nvidia-smi --query-compute-apps=pid,used_memory,name --format=csv,noheader || true
     tail -n 30 "$LOG" 2>/dev/null || true
     ;;
   *)
-    echo "Usage: $0 {prepare|preflight|train|resume|evaluate-dronenoise|evaluate-external|status}" >&2
+    echo "Usage: $0 {prepare|preflight|train|resume|evaluate-dronenoise|evaluate-external|audit-validity|status}" >&2
     exit 2
     ;;
 esac

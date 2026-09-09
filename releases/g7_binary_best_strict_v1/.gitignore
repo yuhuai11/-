@@ -1,0 +1,9 @@
+# The local release keeps these assets through hard links. They are required
+# for local reproducibility but must not be committed to the source repository.
+artifacts/
+data/
+
+# Runtime outputs created when retraining or running inference.
+logs/
+prediction.json
+
