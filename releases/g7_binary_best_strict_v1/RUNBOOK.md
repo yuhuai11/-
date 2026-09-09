@@ -71,6 +71,8 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/run.sh train
 CUDA_VISIBLE_DEVICES=0 bash scripts/run.sh resume
 ```
 
+发布包不长期保存历史`last.pt`。上面的恢复命令只适用于使用本包重新启动训练后，新产生且尚未完成的恢复检查点；当前已完成的三seed模型应直接使用`best.pt`。
+
 ## 重新执行外部评价
 
 ```bash
@@ -85,4 +87,3 @@ bash scripts/run.sh aggregate-one-second
 ```bash
 bash scripts/run.sh test
 ```
-

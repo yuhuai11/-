@@ -1,0 +1,10 @@
+family,status,role,model_policy,document_location,notes
+G2-G6,ARCHIVED,early_binary_ablation,baseline_or_metadata_only,docs/archive/g2_g6_legacy,历史对照与消融依据
+G7_STRICT,PROMOTED,current_binary_detector,keep_best_only,docs/current/binary_g7,当前正式二分类主线
+G7_R0-R6,SUPERSEDED,binary_evolution,keep_best_when_scientifically_needed,docs/archive/g7_evolution,已被严格无泄露协议替代
+G7_R7,FAILED,freq_mixstyle_ablation,keep_metrics_and_best_if_needed,docs/experiments/failed,门禁未通过
+G7_R8,FAILED,urban_negative_ablation,keep_metrics_and_best_if_needed,docs/experiments/failed,门禁未通过
+G7_R9,ACTIVE,next_domain_generalization_experiment,no_checkpoint_yet,docs/current/binary_g7,仅完成方案和预检
+G8-G17,ARCHIVED,binary_generalization_history,keep_baseline_and_evidence,docs/archive/g8_g17_binary,非当前正式主线
+G18-G22,ARCHIVED_MODEL_ID,model_identification_research,keep_results_and_promoted_models,docs/archive/model_identification_g18_g22,与二分类主线隔离
+

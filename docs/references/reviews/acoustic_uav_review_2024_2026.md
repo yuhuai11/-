@@ -171,6 +171,6 @@ Noise/非无人机往往远多于每个无人机型号。除 class weight 或 fo
 
 ### 本次重点阅读的本地附件
 
-- [Kümmritz 2024 PDF](</home/user1/.codex/attachments/a1ce04a8-d905-479e-96ee-adf45f9132e7/Kümmritz - 2024 - The Sound of Surveillance Enhancing Machine Learning-Driven Drone Detection with Advanced Acoustic.pdf>)
-- [AUDRON 2025 PDF](</home/user1/.codex/attachments/dcbb9dae-238c-47d6-9fe1-a734d5fa5ecf/Chatterjee 等 - 2025 - AUDRON A Deep Learning Framework with Fused Acoustic Signatures for Drone Type Recognition.pdf>)
-- [Reuter 2026 PDF](</home/user1/.codex/attachments/77f0fb39-aa08-408e-b346-d851d1e7822f/Reuter 等 - 2026 - Improving acoustic drone detection generalization through pretraining and data augmentation.pdf>)
+- [Kümmritz 2024论文页面](https://www.mdpi.com/2504-446X/8/3/105)
+- [AUDRON 2025预印本](https://arxiv.org/abs/2512.20407)
+- [Reuter 2026工程内PDF](../papers/reuter_2026/Reuter_2026_Improving_acoustic_drone_detection_generalization.pdf)

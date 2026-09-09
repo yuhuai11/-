@@ -43,40 +43,39 @@ Python发行包的当前名称为`acoustic-uav-open-set-identification`；导入
 输入，并按原始音频及最终模型输入哈希形成不可拆分组件。后者修复的是已审计到的精确
 内容交叉和类别相关循环补齐，不表示已经排除近重复、会话或设备层面的全部泄漏。过程、
 数据统计、拒绝实验和新结果统一记录在
-[DADS历史测试口径更正与G7精确内容泄漏修复重训报告](docs/DADS历史测试口径更正与G7精确内容泄漏修复重训报告.md)。
+[DADS历史测试口径更正与G7精确内容泄漏修复重训报告](docs/current/binary_g7/DADS历史测试口径更正与G7精确内容泄漏修复重训报告.md)。
 原生0.5秒协议的seed 42重训已经完成：固定阈值0.50下，Val F1为`0.990233`，
 已消费内部开发Test F1为`0.988123`，最佳epoch为7。新检查点位于
 `artifacts/g7_leakage_fixed_v2/runs/seed_42/best.pt`。它是当前DADS协议修复后的
-内部基线；由于尚未完成外部来源复核，不能直接替换下方历史G7的部署/外部比较角色。
+内部基线。随后seed 42/43/44严格重训、外部Benchmark复核和1秒录音级聚合均已完成，
+该严格版本现已成为二分类正式主线；外部集合因已被多轮查看，仍只能称为开发Benchmark。
 
 ## 当前工程状态
 
-当前正式模型已经从原始CRNN基线发展为：
+当前正式二分类模型已经从原始CRNN基线发展为：
 
 ```text
-G7 PANNs Cnn14_16k AudioSet预训练模型（seed 42）
+G7严格版PANNs Cnn14_16k AudioSet预训练模型（seed 42/43/44）
 ```
 
 正式检查点：
 
 ```text
-artifacts_g7_panns_pt/runs/seed_42/best.pt
+artifacts/g7_strict_retrain_v1/runs/seed_{42,43,44}/best.pt
 ```
 
-后续开发参考：
+部署首选seed42，并使用原生0.5秒输入、连续两个片段概率的非重叠1秒均值和固定阈值0.5。
+完整独立交付目录为`releases/g7_binary_best_strict_v1/`。旧路径
+`artifacts_g7_panns_pt/`保留为历史G7预训练基线，不再代表当前正式版本。
 
-- [当前阶段模型总结（2026-08-04）](docs/当前阶段模型总结_2026-08-04.md)
-- [G7数据泄露与结果虚高修整报告](docs/G7数据泄露与结果虚高修整报告.md)
-- [G7模型结果与性能分析报告](docs/G7模型结果与性能分析报告.md)
-- [G7跨域召回、阈值迁移与低信噪比检测改进计划](docs/G7改进计划.md)
-- [G7-R2参考Reuter等（2026）的泛化增强消融实验方案](docs/G7-R2参考Reuter2026的泛化增强消融实验方案.md)
-- [G17双采样率互补表征与安全后融合方案](docs/G17双采样率互补表征与安全后融合方案.md)
-- [G18基于G7的分层开放集无人机型号识别方案](docs/G18基于G7的分层开放集无人机型号识别方案.md)
-- [G19监督对比表征、类别条件开放集与学习型录音聚合方案](docs/G19监督对比表征类别条件开放集与学习型录音聚合方案.md)
-- [G20已知型号闭集识别算法改进方案](docs/G20已知型号闭集识别算法改进方案.md)
-- [G21有限解冻迁移学习方案](docs/G21有限解冻迁移学习方案.md)
-- [G22旋翼谐波特征与PANNs后融合方案](docs/G22旋翼谐波特征与PANNs后融合方案.md)
-- [工程目录整理与历史模型归档说明](docs/工程目录整理与历史模型归档说明.md)
+当前文档入口见[文档索引](docs/README.md)。后续开发参考：
+
+- [G7二分类完整分析](docs/current/binary_g7/G7二分类模型原理创新实验结果与改进分析.md)
+- [G7内外部结果与论文对比](docs/current/binary_g7/G7二分类内外部测试结果与三篇论文对比分析.md)
+- [G7严格重训练实验记录](docs/current/binary_g7/G7严格重训练实验记录.md)
+- [G7严格外部基线与录音级聚合](docs/current/binary_g7/G7严格重训外部基线与1秒聚合实验报告.md)
+- [G7-R9后续优化方案与执行记录](docs/current/binary_g7/G7-R9来源类别配额跨域优化实验方案与执行记录.md)
+- [历史工程整理说明](docs/archive/general/工程目录整理与历史模型归档说明.md)
 
 G17-P0高频可行性审计已通过；正式结果位于
 `artifacts/g17_dual_rate/p0_audit/decision.json`。当前只允许进入P1结构与训练路径
@@ -89,8 +88,8 @@ P3系列Unknown方法比较、P5多种子复现和P6一次性最终Holdout。最
 
 完整方法与最终结果见：
 
-- [G18方法原理与完整流程说明](docs/G18方法原理与完整流程说明.md)
-- [G18实验结果综合汇总报告](docs/G18实验结果综合汇总报告.md)
+- [G18方法原理与完整流程说明](docs/archive/model_identification_g18_g22/G18方法原理与完整流程说明.md)
+- [G18实验结果综合汇总报告](docs/archive/model_identification_g18_g22/G18实验结果综合汇总报告.md)
 
 G19开发分支已经完成监督对比Embedding、门控注意力录音聚合和类别条件
 PCA-OAS Mahalanobis边界实验；Known Tune录音级Accuracy为0.9560、Macro-F1为
@@ -235,11 +234,11 @@ python -m dads_crnn.summarize_experiments
 ## 外部泛化测试
 
 使用服务器上的 Unseen 与 Real-world 数据冻结评估现有 CRNN 和 ResNet10-CBAM，详见
-[外部泛化测试方案](docs/外部泛化测试方案.md)。正式测试包括数据清单与重复审计、逐样本预测、
+[外部泛化测试方案](docs/archive/general/外部泛化测试方案.md)。正式测试包括数据清单与重复审计、逐样本预测、
 分组失效分析、bootstrap 置信区间和三随机种子汇总。
 
 外部测试完成后的改进路线及独立OOD验证规范见
-[泛化能力改进方案](docs/泛化能力改进方案.md)。
+[泛化能力改进方案](docs/archive/general/泛化能力改进方案.md)。
 
 如果尚未执行 `pip install -e .`，可在项目根目录运行：
 
